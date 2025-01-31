@@ -1,0 +1,231 @@
+I"�`<p>Eigenvalue Decomposition, also called Spectral Decomposition, is a mathematical technique used in linear algebra to express a symmetric matrix as a product of three components:</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mpadded width="+6pt" height="+6pt" lspace="3pt" voffset="3pt" style="border: 0.04em solid orange" mathbackground="white"><mstyle scriptlevel="0" displaystyle="false"><mi>A</mi><mo>=</mo><mi>Q</mi><mi mathvariant="normal">Λ</mi><msup><mi>Q</mi><mi>T</mi></msup></mstyle></mpadded><mspace linebreak="newline"></mspace><mtext> </mtext><mspace linebreak="newline"></mspace><mtext>A is the original symmetric matrix</mtext><mspace linebreak="newline"></mspace><mtext>Q is a matrix whose columns are the eigenvectors of A</mtext><mspace linebreak="newline"></mspace><mtext>Λ is a diagonal matrix whose entries are the eigenvalues of A</mtext><mspace linebreak="newline"></mspace><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> 
+\fcolorbox{orange}{white}{$A = QΛQ^T$} \\
+~ \\
+\text{A is the original symmetric matrix} \\
+\text{Q is a matrix whose columns are the eigenvectors of A} \\
+\text{Λ is a diagonal matrix whose entries are the eigenvalues of A} \\
+~ \\
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.715771em;vertical-align:-0.53444em;"></span><span class="mord"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.181331em;"><span style="top:-3.181331em;"><span class="pstrut" style="height:3.715771em;"></span><span class="stretchy fcolorbox" style="height:1.715771em;border-style:solid;border-width:0.04em;background-color:white;border-color:orange;"></span></span><span style="top:-3.715771em;"><span class="pstrut" style="height:3.715771em;"></span><span class="mord boxpad"><span class="mord mathdefault">A</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathdefault">Q</span><span class="mord">Λ</span><span class="mord"><span class="mord mathdefault">Q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.53444em;"><span></span></span></span></span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">A is the original symmetric matrix</span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Q is a matrix whose columns are the eigenvectors of A</span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Λ is a diagonal matrix whose entries are the eigenvalues of A</span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Eigenvalue Decomposition is extremely important because it simplifies linear transformations. It is commonly used in transforming high-dimensional data into a lower dimensional space while retaining its most significant patterns, enabling much more efficient storage and computation.</p>
+
+<p>In this blog post, I will attempt to construct an informal geometric intuition for how Eigenvalue Decomposition works, and why it is so important in decomposing complicated matrices.</p>
+
+<p>We’ll begin this blog post by answering some fundamental questions, and gradually build up to Eigenvalue Decomposition.</p>
+
+<h2 id="1-what-is-a-symmetric-matrix">1. What is a Symmetric Matrix?</h2>
+<p>Symmetric matrices have entries that are symmetric about the diagonal line:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image42.png" width="40%" />
+</div>
+
+<p>Only square matrices can be symmetrical, any other rectangular matrices are not.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image43.png" width="25%" />
+</div>
+
+<h2 id="2-special-properties-of-the-matrix-transpose">2. Special Properties of the Matrix Transpose</h2>
+<p>Transpose is an action you perform on a matrix, where you make the rows of the matrix the columns, and vice versa.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image44.png" width="40%" />
+</div>
+
+<p>When you transpose a rectangular matrix, notice that the dimensionality of the matrix changes:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image45.png" width="40%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>The concept of the matrix transpose is crucial to Eigendecomposition because of its special properties relating to symmetric and orthogonal matrices. Next, we’ll learn about these special transpose properties:</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p><b><u>1. When you transpose a symmetric matrix, you get the exact same matrix back</u></b></p>
+
+<p>Recall the definition and characteristics of a symmetric matrix. If we visualize the matrix transpose happening, we can see why the transposed symmetric matrix is identical to the original matrix:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image46.png" width="40%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p><b><u>2. When you transpose an orthogonal matrix, you get its inverse</u></b></p>
+
+<p>As it turns out, when you transpose an orthogonal matrix, the transposed matrix is equal to the inverse of the orthogonal matrix:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image47.png" width="55%" />
+</div>
+
+<p>Here’s an explanation of why this property is so special, laid out step-by-step:</p>
+
+<ol>
+  <li>
+    <p>Recall that an orthogonal matrix produces a ‘pure rotation’ transformation</p>
+  </li>
+  <li>
+    <p>The inverse of a matrix reverses the transformation by the original matrix, so it ‘untransforms’</p>
+  </li>
+  <li>
+    <p>The ‘untransformation’ of a rotation means to rotate in the reverse direction</p>
+  </li>
+  <li>
+    <p>The transpose of an orthogonal matrix is equal to its inverse matrix (established in the above section)</p>
+  </li>
+  <li>
+    <p>Therefore, the transpose of an orthogonal matrix produces a ‘reverse rotation’ transformation, or, a rotation in the reverse direction.</p>
+  </li>
+</ol>
+
+<p>So, for example, if an orthogonal matrix $Q$ produces a $45°$ clockwise rotation, its transpose $Q^T$ is equal to its matrix $Q^{-1}$, which produces a $45°$ anti-clockwise rotation:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image48.png" width="60%" />
+</div>
+
+<h2 id="3-what-is-matrix-decomposition">3. What is Matrix Decomposition?</h2>
+<p>Let’s begin by recalling what Matrix Composition is. When we do matrix multiplication of let’s say 3 matrices, we’re essentially <b>composing</b> their distinct transformations together into one net/resultant transformation.</p>
+
+<p>For example:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image49.png" width="70%" />
+</div>
+
+<p>So, Matrix Decomposition is essentially going in the reverse direction to Matrix Composition. Suppose you have the transformation of a matrix, doing matrix decomposition means you re-express that as a sequence of much simpler transformations.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>$\text{Composition: Start with multiplication of some matrices → Produce resultant matrix}$</p>
+
+<p>$\text{Decomposition: Start with one matrix → Produce sequence of simpler matrix multiplication}$</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>We can imagine that matrix decomposition is much more difficult than matrix composition - if you were given a random matrix, how would you find a correct sequence of constituent matrices that multiply together to form it?</p>
+
+<p>Hopefully, we will be able to show that spectral decomposition can make this process easier.</p>
+
+<h2 id="4-symmetric-matrices-and-orthogonal-eigenvectors">4. Symmetric Matrices and Orthogonal Eigenvectors</h2>
+<p>A crucial property of symmetric matrices is that their eigenvectors are orthogonal.</p>
+
+<p>Recall that we have a standard basis, $\hat{i}$ and $\hat{j}$ which are orthogonal.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image50.png" width="25%" />
+</div>
+
+<p>If we apply the property of symmetric matrices having orthogonal eigenvectors, we can observe that there exists a Symmetric Matrix $Q$ which produces a ‘pure rotation transformation’, which happens to rotate the standard basis $\hat{i}$ and $\hat{j}$ to align with its eigenvectors.</p>
+
+<p>In the same case, there would exist an inverse matrix $Q^{-1}$ which rotates the eigenvectors to align with the standard basis instead.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image51.png" width="70%" />
+</div>
+
+<p>(Note: by ‘rotation’, I really mean ‘transformation from one basis to another’, eg. transformation from the standard basis into the eigenvector basis. But for this informal blog post, I will keep things simple and use the term ‘rotation’.)</p>
+
+<h2 id="5-spectral-decomposition">5. Spectral Decomposition</h2>
+<p>Now, we’re ready to understand spectral decomposition.</p>
+
+<p>The Spectral Decomposition Theorem states that for any real $n \times n$ symmetric matrix $A$ can be decomposed into a sequence of three simple matrices, $QΛQ^T$, whereby:</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mpadded width="+6pt" height="+6pt" lspace="3pt" voffset="3pt" style="border: 0.04em solid orange" mathbackground="white"><mstyle scriptlevel="0" displaystyle="false"><mi>A</mi><mo>=</mo><mi>Q</mi><mi mathvariant="normal">Λ</mi><msup><mi>Q</mi><mi>T</mi></msup></mstyle></mpadded><mspace linebreak="newline"></mspace><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> 
+\fcolorbox{orange}{white}{$A = QΛQ^T$} \\
+~ \\
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.715771em;vertical-align:-0.53444em;"></span><span class="mord"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.181331em;"><span style="top:-3.181331em;"><span class="pstrut" style="height:3.715771em;"></span><span class="stretchy fcolorbox" style="height:1.715771em;border-style:solid;border-width:0.04em;background-color:white;border-color:orange;"></span></span><span style="top:-3.715771em;"><span class="pstrut" style="height:3.715771em;"></span><span class="mord boxpad"><span class="mord mathdefault">A</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathdefault">Q</span><span class="mord">Λ</span><span class="mord"><span class="mord mathdefault">Q</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.53444em;"><span></span></span></span></span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image52.png" width="70%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>A is the original symmetric matrix</mtext><mspace linebreak="newline"></mspace><mtext>Q is an orthogonal matrix whose columns are the eigenvectors of A</mtext><mspace linebreak="newline"></mspace><mtext>Λ is a diagonal matrix whose entries are the eigenvalues of A</mtext><mspace linebreak="newline"></mspace><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> 
+\text{A is the original symmetric matrix} \\
+\text{Q is an orthogonal matrix whose columns are the eigenvectors of A} \\
+\text{Λ is a diagonal matrix whose entries are the eigenvalues of A} \\
+~ \\
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">A is the original symmetric matrix</span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Q is an orthogonal matrix whose columns are the eigenvectors of A</span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Λ is a diagonal matrix whose entries are the eigenvalues of A</span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p><b><u>Let's visualize the transformation effect of each decomposed matrix product.</u></b></p>
+
+<p>Starting with Lambda, $Λ$, it is a diagonal matrix whose entries are the eigenvalues of A. Assuming our original matrix $A$ is $2 \times 2$, our $Λ$ matrix has diagonal entries $\lambda_1$ and $\lambda_2$. So, the $Λ$ matrix scales the $x$ axis by $\lambda_1$, and scales the $y$ axis by $\lambda_2$.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image53.png" width="40%" />
+</div>
+
+<p>Next, for $Q$, it is an orthogonal matrix, so we know it does a ‘pure rotation’ transformation. Because its entries are the eigenvectors of A, $Q$ rotates the standard basis to align with the respective eigenvectors.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image54.png" width="49%" />
+</div>
+
+<p>Of course, for $Q^T$, whereby $Q^T = Q^{-1}$, it does the opposite of $Q$, and rotates the eigenvectors to align with the standard basis.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p><b><u>Let's go through an example to see why this decomposition makes sense!</u></b></p>
+
+<p>Let’s say we have a $2 \times 2$ symmetric matrix $A$, which can be decomposed using the spectral decomposition theorem, like so:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image55.png" width="55%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Next, let’s say we know that matrix $A$ produces the following transformation effect:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image56.png" width="70%" />
+</div>
+
+<p>Since we know matrix $A$ can be decomposed, we know that this resultant transformation is the composition of three simpler transformation effects. Let’s visualize this:</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Firstly, using matrix $Q^T$, we identify the eigenvectors of $A$, and rotate them onto the standard basis:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image57.png" width="70%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Next, using the matrix $Λ$, we scale the x-axis by 6, and the y-axis by 2:</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image58.png" width="75%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>And finally, using the matrix $Q$, we rotate the standard basis to match the original location of the eigenvectors.</p>
+
+<div class="centered-image">
+    <img class="post-image" src="/assets/blog_images/image59.png" width="75%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Why does this make so much intuitive sense?</p>
+
+<p>Recall one of the definitions of eigenvectors - they are vectors that do not get knocked off their span during a linear transformation, such that the effect of linear transformation is just to scale the eigenvectors. This scaling factor is also known as the eigenvalue.</p>
+
+<p>You may also question, why do we even “rotate” the eigenvector basis to match the standard basis? If we were to remain in the standard basis, it would be very difficult to understand the linear transformation action of the matrix, because it may have complicated motions (eg. rotating and scaling simultaneously). By transforming into the eigenvector basis, the linear transfomation action is constrained to only scaling along each principal axis. Not only does this allow us to understand the transformation clearly, it also makes many computations easier.</p>
+
+<p>Spectral Decomposition is a powerful (and beautiful) tool, but it suffers from poor generalizability - how often do we even get to work with a symmetric matrix? You’ll need a square matrix that happens to be symmetric about its diagonal line.</p>
+
+<p>To make spectral decomposition more versatile, we’ll need to learn about Singular Value Decomposition. See you in the next post!</p>
+
+<h2 id="references">References</h2>
+<p>This blog post was entirely based on Visual Kernel’s <a href="https://youtu.be/mhy-ZKSARxI?si=QZ36fP7WF47oDUPS" target="_blank">excellent video on Spectral Decomposition!</a></p>
+:ET

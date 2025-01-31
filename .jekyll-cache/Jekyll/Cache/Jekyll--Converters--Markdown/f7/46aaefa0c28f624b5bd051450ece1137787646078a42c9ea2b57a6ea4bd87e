@@ -1,0 +1,894 @@
+I"�X<p>In this project, we will focus on the use of algorithms for dimensionality reduction. More specifically, I will apply Singular Value Decomposition (SVD) and the Fourier Transform (FT) in image compression tasks.</p>
+
+<p>The goal of this project is to analyze and conclude whether SVD or FT image compression yields compressed images of higher image quality. The computational efficiency of each algorithm is also taken into account for fairer analyses.</p>
+
+<p>A quick note on the rationale for comparison between these two seemingly unrelated algorithms - both the SVD and the FT are characterized by some unitary transform and expression of our data as a scaling in a different basis. Once the vector is scaled, a windowing/filtering function is introduced to identify and remove the basis vectors and frequencies which are sensitive to small changes in the data, or account for the least variance in our data. I figured it would be an interesting test to see how these two fundamentally linked algorithms perform in an image compression task.</p>
+
+<p>Our dataset of images was obtained from Scikit-Learn’s skimage.data API, specifically from their “General-purpose images” collection. The two algorithms were implemented using the SVD and FFT functions in the Numpy library.</p>
+
+<p>In the following sections, I will cover more details about the preliminary data analysis (with visualizations), testing methodology, result analysis with discussions and the summary of this report.</p>
+
+<p>I also decided to export the original jupyter notebook in HTML format for easy reference to the code and output, so this page will read like a jupyter notebook.</p>
+
+<p>This page will be segmented in the following sections:</p>
+
+<ol>
+  <li>Brief runthrough on the mathematical foundations of our two algorithms</li>
+  <li>Setting up dependencies
+    <ol>
+      <li>Import packages</li>
+      <li>Accessing the Image Dataset</li>
+    </ol>
+  </li>
+  <li>Image dataset pre-analysis &amp; visualization
+    <ol>
+      <li>Writing a function to convert images to grayscale</li>
+      <li>Plot Histogram of Pixel Intensity &amp; Frequency for each image</li>
+      <li>Calculate Shannon Entropy of each image</li>
+    </ol>
+  </li>
+  <li>General testing methodology &amp; test metrics
+    <ol>
+      <li>Writing SVD compression &amp; binary search functions</li>
+      <li>Writing FT compression &amp; binary search functions</li>
+      <li>Explaining testing metrics</li>
+    </ol>
+  </li>
+  <li>Results &amp; analysis
+    <ol>
+      <li>SVD &amp; FFT for all images at sample compression ratio of 1.5</li>
+      <li>Preliminary observations &amp; discussion</li>
+      <li>Writing a function to calculate PSNR for compressed images</li>
+      <li>Plot PSNR &amp; Computation Time for SVD &amp; FFT on top 3 candidate images</li>
+      <li>Quantitative performance analysis &amp; discussion</li>
+    </ol>
+  </li>
+  <li>Conclusion</li>
+</ol>
+
+<h2 id="1-brief-mathematical-foundations-for-our-project">1. Brief mathematical foundations for our project</h2>
+
+<p>In this section, I skip the mathematical derivation of each algorithm (which should be coming in a blog post soon), and touch on the primary components which will be filtered in our image compression task.</p>
+
+<h3 id="singular-value-decomposition">Singular Value Decomposition</h3>
+
+<p>The singular value decomposition of a matrix A is the factorization of A into the product of three matrices $A = U Σ V^T$ where the columns of U and V are orthonormal and the matrix Σ is diagonal with positive real entries.</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/fcfca38c-4072-49e1-ac02-638e65e0c645.png" style="max-width: 60%;" />
+</div>
+<p><br /></p>
+
+<p>The most important factor matrix to us is Σ, which contains our singular values. This is the matrix that scales each vector before the axis system is rotated by the matrix U. We can reformulate SVD in terms of the singular values 𝝈: A = $U Σ V^T$=  $𝝈_1u_1v^T_1$+ … + $𝝈_ru_rv^T_r$</p>
+
+<p>Because the singular values have already been sorted descendingly in the Σ factor matrix, we know that $𝝈_1$ &gt;=  $𝝈_2$ &gt;=  (…) &gt;= $𝝈_r$. Therefore, we can look at the first few singular values to see what the most significant direction-setting components are.</p>
+
+<p>To apply this understanding to the task of image compression, we will compress an input image by removing unwanted singular values. We can approximate the matrix A by keeping only the largest K singular values and their corresponding singular vectors. Reducing K will decrease the storage requirements and the image quality, but may still provide a reasonable approximation of the original image.</p>
+
+<h3 id="fourier-transform">Fourier Transform</h3>
+
+<p>The Fourier Transform of a function or signal F(x) is a mathematical tool that decomposes (any aperiodic) F(x) into a sum of constituent sines and cosines of different frequencies.</p>
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/5091f8c8-dae6-407c-bef7-dc42701ab859.png" style="max-width: 60%;" />
+</div>
+
+<p>To compute a Fourier Transform in the context of image compression, we compute the Discrete Fourier Transformation (DFT) form:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/4a72092e-44fc-4ad3-9362-299dfc4f16e0.png" />
+</div>
+
+<p>We can view the transformation in two stages, in the context of image compression:</p>
+<ol>
+  <li>A conversion from spatial (pixel) values to frequency values</li>
+  <li>A frequency representation where each frequency corresponds to certain image features</li>
+</ol>
+
+<p>Geometrically, this process can be interpreted as decomposing the image into various sinusoidal patterns. Lower frequency components typically represent smooth or uniform regions in the image, while higher frequency components capture fine details and edges.</p>
+
+<p>The matrix representation of the transformed image in the frequency domain is often complex-valued, with each entry containing amplitude and phase information for each frequency component. The amplitude indicates the strength of each frequency component, while the phase determines its position.</p>
+
+<p>For image compression, we can leverage the Fourier Transform by retaining only the most significant frequency components and discarding less significant components. One example is to remove high-frequency components, since they usually account for finer details and edges that we may not need. This selective retention of frequencies reduces the data size but maintains essential image features. Thus, by reconstructing the image using only the dominant lower frequencies, we achieve a compressed approximation of the original image.</p>
+
+<p><br /></p>
+
+<h2 id="2-setting-up-dependencies">2. Setting up dependencies</h2>
+
+<h3 id="import-packages">Import packages</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">imageio</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">data</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="kn">import</span> <span class="n">color</span>
+</code></pre></div></div>
+
+<h3 id="accessing-the-image-dataset">Accessing the image dataset</h3>
+
+<p>Our image dataset is accessed through the skimage API. Because I chose to work with skimage’s “General Images” collection, we have to type in the names of the 18 images that belong to that collection, under the “images” tuple below. Then, we access attributes that belong to each image, such as the image and name, using the getattr() function. Finally, we plot the images to see what they look like.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">images</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s">'astronaut'</span><span class="p">,</span>
+    <span class="s">'binary_blobs'</span><span class="p">,</span>
+    <span class="s">'brick'</span><span class="p">,</span>
+    <span class="s">'colorwheel'</span><span class="p">,</span>
+    <span class="s">'camera'</span><span class="p">,</span>
+    <span class="s">'cat'</span><span class="p">,</span>
+    <span class="s">'checkerboard'</span><span class="p">,</span>
+    <span class="s">'clock'</span><span class="p">,</span>
+    <span class="s">'coffee'</span><span class="p">,</span>
+    <span class="s">'coins'</span><span class="p">,</span>
+    <span class="s">'eagle'</span><span class="p">,</span>
+    <span class="s">'grass'</span><span class="p">,</span>
+    <span class="s">'gravel'</span><span class="p">,</span>
+    <span class="s">'horse'</span><span class="p">,</span>
+    <span class="s">'logo'</span><span class="p">,</span>
+    <span class="s">'page'</span><span class="p">,</span>
+    <span class="s">'text'</span><span class="p">,</span>
+    <span class="s">'rocket'</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Create subplot space for image dataset
+</span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">8</span><span class="p">))</span>
+
+<span class="c1"># Loop over images and axes together
+</span><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">axes</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">axes</span><span class="p">.</span><span class="n">flat</span><span class="p">):</span>
+    <span class="n">caller</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">caller</span><span class="p">()</span>
+    <span class="n">axes</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="p">.</span><span class="n">cm</span><span class="p">.</span><span class="n">gray</span> <span class="k">if</span> <span class="n">image</span><span class="p">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">.</span><span class="n">axis</span><span class="p">(</span><span class="s">'off'</span><span class="p">)</span>  <span class="c1"># Hide axis
+</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+<p><br /></p>
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_7_0.png" style="max-width: 100%;" />
+</div>
+<p><br /></p>
+
+<h2 id="3-image-dataset-pre-analysis--visualization">3. Image dataset pre-analysis &amp; visualization</h2>
+
+<h3 id="writing-a-function-to-convert-images-to-grayscale">Writing a function to convert images to grayscale</h3>
+
+<p>Some of the images in the dataset come in grayscale, RGB and even RGBA. In order to have consistency and simplicity when working with these images, I chose to convert all of them to grayscale, in uint8 format. To handle that conversion, I wrote the following function, image_to_grayscale, which handles the varying dimensionality of each grayscale, RGB, and RGBA image.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">image_to_greyscale</span><span class="p">(</span><span class="n">image_array</span><span class="p">):</span>
+
+    <span class="c1"># Handle color images
+</span>    <span class="k">if</span> <span class="n">image_array</span><span class="p">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">image_array</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Convert RGB to grayscale
+</span>            <span class="n">image_grey</span> <span class="o">=</span> <span class="n">color</span><span class="p">.</span><span class="n">rgb2gray</span><span class="p">(</span><span class="n">image_array</span><span class="p">)</span>  
+            <span class="n">image_grey</span> <span class="o">=</span> <span class="p">(</span><span class="n">image_grey</span> <span class="o">*</span> <span class="mi">255</span><span class="p">).</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
+            
+        <span class="k">elif</span> <span class="n">image_array</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># Convert RGBA to grayscale by ignoring the alpha channel
+</span>            <span class="n">image_grey</span> <span class="o">=</span> <span class="n">color</span><span class="p">.</span><span class="n">rgb2gray</span><span class="p">(</span><span class="n">image_array</span><span class="p">[...,</span> <span class="p">:</span><span class="mi">3</span><span class="p">])</span>  <span class="c1"># Only take the RGB channels
+</span>            <span class="n">image_grey</span> <span class="o">=</span> <span class="p">(</span><span class="n">image_grey</span> <span class="o">*</span> <span class="mi">255</span><span class="p">).</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nb">ValueError</span><span class="p">(</span><span class="s">"Unsupported number of channels. Must be 3 (RGB) or 4 (RGBA)."</span><span class="p">)</span>
+
+    <span class="c1"># Handle binary images
+</span>    <span class="k">elif</span> <span class="n">image_array</span><span class="p">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">image_array</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">image_grey</span> <span class="o">=</span> <span class="n">image_array</span><span class="p">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span>  <span class="c1"># Convert True to 255 and False to 0
+</span>
+    <span class="c1"># Handle grayscale images
+</span>    <span class="k">elif</span> <span class="n">image_array</span><span class="p">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">image_array</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">:</span>
+        <span class="n">image_grey</span> <span class="o">=</span> <span class="n">image_array</span>  <span class="c1"># Already grayscale
+</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="nb">ValueError</span><span class="p">(</span><span class="s">"Unsupported image format or dtype"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">image_grey</span>
+</code></pre></div></div>
+
+<h3 id="plotting-a-histogram-of-pixel-intensity--frequency-for-each-image">Plotting a histogram of Pixel Intensity &amp; Frequency for each image</h3>
+
+<p>Here, we plot the frequency of the pixel intensity within each image matrix. These histogram plots will allow us to visually understand the general complexity of each grayscale image. It will also serve as a preparatory step before we quantify the complexity of each image usingShannon Entropy.</p>
+
+<p>In the context of our small image dataset, these steps aren’t critical, but may yield some interesting observations nonetheless.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Create a figure with a 6x3 grid of subplots for histograms
+</span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+
+<span class="c1"># Loop over images and axes to plot histograms
+</span><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">axes</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">axes</span><span class="p">.</span><span class="n">flat</span><span class="p">):</span>
+    <span class="n">image_array</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)()</span>
+    <span class="n">image_grey</span> <span class="o">=</span> <span class="n">image_to_greyscale</span><span class="p">(</span><span class="n">image_array</span><span class="p">)</span>
+
+    <span class="c1"># Calculate the histogram
+</span>    <span class="n">hist</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+
+    <span class="c1"># Plot the histogram
+</span>    <span class="n">axes</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">bin_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">hist</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">"black"</span><span class="p">)</span>  <span class="c1"># bin_edges[:-1] aligns with hist
+</span>    <span class="n">axes</span><span class="p">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">"Pixel Intensity"</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">"Frequency"</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+<p><br /></p>
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_12_0.png" style="max-width: 100%;" />
+</div>
+<p><br /></p>
+
+<p>We can observe some expected correspondence between the Pixel intensity graphs and the original images.</p>
+
+<p>On a very general basis, images containing photographs of natural subjects, such as “camera” and “cat” have busier plots, while “brick”, “binary_blobs” and “horse” have simpler plots.</p>
+
+<p>Images like the “checkerboard” have a starkly symmetrical plot, which corresponds with their repeating patterns.</p>
+
+<p>Amother interesting observation is that strongly “texture-focused” images like ‘grass’ and ‘gravel’ have pixel intensity plots which roughly resemble a gaussian-like probability distribution.</p>
+
+<h3 id="calculate-shannon-entropy-for-each-image">Calculate Shannon Entropy for each image</h3>
+
+<p>Now, we quantify the complexity of each grayscale image by calculating the shannon entropy from pixel intensity values. Again, I don’t think this is a particularly crucial step, but it does provide some quantitative pre-analysis of our dataset, and may yield some interesting insights.</p>
+
+<p>Here’s the mathematical formula we’re using for Shannon Entropy, with log base 2 to measure entropy in bits.</p>
+
+<div style="text-align: center;">
+    <img src="/assets/images/svd-fft-images/e95f6464-3f8c-436d-a584-57480b5b10f1.png" style="max-width: 50%;" />
+</div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_entropy</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+
+    <span class="c1"># Calculate the histogram
+</span>    <span class="n">hist</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+    
+    <span class="c1"># Normalize the histogram to get probabilities
+</span>    <span class="n">hist_normalized</span> <span class="o">=</span> <span class="n">hist</span> <span class="o">/</span> <span class="n">hist</span><span class="p">.</span><span class="nb">sum</span><span class="p">()</span>
+    
+    <span class="c1"># Remove zero probabilities to avoid log2(0)
+</span>    <span class="n">hist_nonzero</span> <span class="o">=</span> <span class="n">hist_normalized</span><span class="p">[</span><span class="n">hist_normalized</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Compute entropy
+</span>    <span class="n">entropy</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">hist_nonzero</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log2</span><span class="p">(</span><span class="n">hist_nonzero</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">entropy</span>
+
+
+<span class="c1"># Store the results in a list of tuples (name, entropy)
+</span><span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+    <span class="n">image_array</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)()</span>
+    <span class="n">image_grey</span> <span class="o">=</span> <span class="n">image_to_greyscale</span><span class="p">(</span><span class="n">image_array</span><span class="p">)</span>
+    <span class="n">entropy_value</span> <span class="o">=</span> <span class="n">calculate_entropy</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">results</span><span class="p">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">entropy_value</span><span class="p">))</span>
+
+<span class="c1"># Sort results by entropy in descending order
+</span><span class="n">sorted_results</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># Print sorted results
+</span><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entropy</span> <span class="ow">in</span> <span class="n">sorted_results</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">entropy</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>coffee: 7.661570369288201
+coins: 7.524412237976031
+astronaut: 7.444158328824859
+page: 7.443679900610648
+eagle: 7.4014811794262005
+grass: 7.288338951598444
+gravel: 7.253146960346441
+camera: 7.231695011055704
+cat: 7.004601864511788
+colorwheel: 6.911928827078324
+rocket: 6.669767402285822
+text: 6.13372198445881
+clock: 6.0355022558653415
+brick: 5.455265334504446
+logo: 4.548489581745522
+checkerboard: 1.6317676229974185
+binary_blobs: 1.0
+horse: 0.9158271515170937
+</code></pre></div></div>
+
+<h2 id="4-general-testing-methodology--test-metrics">4. General testing methodology &amp; test metrics</h2>
+
+<p>For our tests, we will decompose each image with both algorithms. Then, we will conduct dimensionality reduction in the image to compress it, and regenerate the compressed image.</p>
+
+<p>In order to conduct a fair test, we will compress each image by the same compression ratio for each algorithm. Compression ratio of each image is defined as follows:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/3f339197-9135-492e-94e8-cb37c144b062.png" />
+</div>
+
+<p>This will allow us to compare the qualities of the final output based on the “same amount of compression” done by each algorithm.</p>
+
+<p>In this section, I will explain how the image decomposition and compression was done for each algorithm.</p>
+
+<p>However, since nobody wants to read through huge blobs of text, here’s a diagram describing the overall workflow visually:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/6945e33e-b9e4-4fa0-ac1e-9684581d51d7.png" style="max-width: 80%;" />
+</div>
+
+<h3 id="implementation-of-the-svd-algorithm">Implementation of the SVD Algorithm</h3>
+
+<p>To implement the SVD Algorithm, we used the Numpy linalg.svd function. It decomposes an input matrix into the three constituent matrices, which we can then manipulate for image compression.</p>
+
+<p>After an image had been decomposed through SVD, and had its singular values removed for compression, the compressed image was reconstructed through matrix multiplication operations, then transformed into grayscale, uint8 form.</p>
+
+<p>To accomplish the task of image compression within the context of this project, two functions had to be designed:</p>
+
+<p>1) A compression function that removes unwanted singular values based on an input parameter that contains a predefined number of singular values to retain.</p>
+
+<p>2) A function that searches for the correct number of singular values to retain, in order to enable the compressed image file size to approximate an input parameter that contains a predefined image compression ratio. To search for the optimal number of singular values to retain, a binary search was implemented.</p>
+
+<p>In the code cell below, we write the two functions.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">svd_image_compress</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">num_singular_values</span><span class="p">):</span>
+    
+    <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">svd</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">U_reduced</span> <span class="o">=</span> <span class="n">U</span><span class="p">[:,</span> <span class="p">:</span><span class="n">num_singular_values</span><span class="p">]</span>
+    <span class="n">S_reduced</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">diag</span><span class="p">(</span><span class="n">S</span><span class="p">[:</span><span class="n">num_singular_values</span><span class="p">])</span>
+    <span class="n">Vt_reduced</span> <span class="o">=</span> <span class="n">Vt</span><span class="p">[:</span><span class="n">num_singular_values</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">compressed_image_float64</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U_reduced</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">S_reduced</span><span class="p">,</span> <span class="n">Vt_reduced</span><span class="p">))</span>
+    <span class="n">compressed_image_uint8</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">clip</span><span class="p">(</span><span class="n">compressed_image_float64</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">).</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">compressed_image_uint8</span>
+
+
+<span class="k">def</span> <span class="nf">find_optimal_singular_values</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">target_compression_ratio</span><span class="p">,</span> <span class="n">tolerance</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">):</span>
+
+    <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="n">svd</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">S</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_singular_values</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+
+    <span class="c1"># Save original image to get its size
+</span>    <span class="n">original_image_filename</span> <span class="o">=</span> <span class="s">'original_image.png'</span>
+    <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">original_image_filename</span><span class="p">,</span> <span class="n">image</span><span class="p">)</span>
+    <span class="n">original_image_size</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">original_image_filename</span><span class="p">)</span>
+
+    <span class="c1"># iteration = 0
+</span>    
+    <span class="k">while</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">low</span> <span class="o">+</span> <span class="n">high</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        
+        <span class="c1"># Compress image using mid value
+</span>        <span class="n">compressed_image_uint8</span> <span class="o">=</span> <span class="n">svd_image_compress</span><span class="p">(</span><span class="n">image</span><span class="p">,</span><span class="n">mid</span><span class="p">)</span>
+        
+        <span class="c1"># Save the compressed image to calculate size
+</span>        <span class="n">compressed_image_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s">'temp_compressed_image_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">.png'</span>
+        <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">compressed_image_filename</span><span class="p">,</span> <span class="n">compressed_image_uint8</span><span class="p">)</span>
+        <span class="n">compressed_image_size</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">compressed_image_filename</span><span class="p">)</span>
+    
+        <span class="c1"># Calculate the current compression ratio
+</span>        <span class="n">current_compression_ratio</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">original_image_size</span> <span class="o">/</span> <span class="n">compressed_image_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        
+        <span class="c1"># Use the desired compression ratio to adjust the search bounds
+</span>        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">target_compression_ratio</span> <span class="o">-</span> <span class="n">current_compression_ratio</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="n">num_singular_values</span> <span class="o">=</span> <span class="n">mid</span>
+            <span class="k">break</span>
+            
+        <span class="k">elif</span> <span class="n">current_compression_ratio</span> <span class="o">&lt;</span> <span class="n">target_compression_ratio</span><span class="p">:</span>
+            <span class="n">num_singular_values</span> <span class="o">=</span> <span class="n">mid</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">-</span> <span class="mi">1</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num_singular_values</span> <span class="o">=</span> <span class="n">mid</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">num_singular_values</span>
+</code></pre></div></div>
+
+<h3 id="implementation-of-the-ft-algorithm">Implementation of the FT Algorithm</h3>
+
+<p>To implement the FT Algorithm, we used the Numpy fft.fft2 function (which uses the Fast Fourier Transform (FFT) under the hood).</p>
+
+<p>Firstly, we transform the input image matrix from the spatial domain into the frequency domain with the fft.fft2 function. Then we applied fft.fftshift so that the zero frequency, or lowest frequency component, was shifted to the center of the spectrum. This then enabled us to create a masking function using np.ogrid to filter out unwanted frequency components based on an input parameter which describes the radius of the open grid mask. After filtering, the spectrum plot was inverse-shifted, then the inverse FFT was applied to return our compressed image. Since the returned matrix had complex components, we also had to transform them into real pixel intensity values.</p>
+
+<p>To accomplish all the above sub-tasks within the context of this project, two functions had to be designed:</p>
+
+<ol>
+  <li>
+    <p>A compression function that removes high-frequency components based on an input parameter that contains a masking radius.</p>
+  </li>
+  <li>
+    <p>A function that searches for the correct masking radius, in order to enable the compressed image file size to approximate an input parameter that contains a predefined image compression ratio. To search for the optimal masking radius, a binary search was also implemented.</p>
+  </li>
+</ol>
+
+<p>In the code cell below, we write the two functions.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Basic FFT Function
+</span>
+<span class="k">def</span> <span class="nf">apply_fft_and_mask</span><span class="p">(</span><span class="n">image</span><span class="p">,</span><span class="n">radius</span><span class="p">):</span>
+
+    <span class="n">fft_image</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">fft</span><span class="p">.</span><span class="n">fft2</span><span class="p">(</span><span class="n">image</span><span class="p">)</span> <span class="c1"># Transforms image to frequency domain
+</span>    <span class="n">fft_shifted</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">fft</span><span class="p">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">fft_image</span><span class="p">)</span> <span class="c1"># Shift zero frequency component to center of spectrum
+</span>    
+    <span class="c1"># Filter High Frequency Components
+</span>    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">image</span><span class="p">.</span><span class="n">shape</span>
+    <span class="n">center_row</span><span class="p">,</span> <span class="n">center_col</span> <span class="o">=</span> <span class="n">rows</span><span class="o">//</span><span class="mi">2</span><span class="p">,</span> <span class="n">cols</span><span class="o">//</span><span class="mi">2</span> <span class="c1"># Center of image
+</span>    
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span> <span class="c1"># This mask will eventually contain 1's in the area corresponding to low freqs, 0's elsewhere.
+</span>    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">ogrid</span><span class="p">[</span><span class="o">-</span><span class="n">center_row</span><span class="p">:</span><span class="n">rows</span><span class="o">-</span><span class="n">center_row</span><span class="p">,</span> <span class="o">-</span><span class="n">center_col</span><span class="p">:</span><span class="n">cols</span><span class="o">-</span><span class="n">center_col</span><span class="p">]</span> <span class="c1"># This centers your y,x variables with "center_row, center_col"
+</span>    <span class="n">mask_area</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">radius</span><span class="o">**</span><span class="mi">2</span> 
+    <span class="n">mask</span><span class="p">[</span><span class="n">mask_area</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># Set masking condition for filtering
+</span>    
+    <span class="n">fft_shifted_filtered</span> <span class="o">=</span> <span class="n">fft_shifted</span> <span class="o">*</span> <span class="n">mask</span>
+    
+    <span class="c1"># Reconstruct compressed image with Inverse FFT
+</span>    
+    <span class="n">fft_compressed_unshifted</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">fft</span><span class="p">.</span><span class="n">ifftshift</span><span class="p">(</span><span class="n">fft_shifted_filtered</span><span class="p">)</span>
+    <span class="n">compressed_image</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">fft</span><span class="p">.</span><span class="n">ifft2</span><span class="p">(</span><span class="n">fft_compressed_unshifted</span><span class="p">)</span>
+    <span class="n">compressed_image_real</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nb">abs</span><span class="p">(</span><span class="n">compressed_image</span><span class="p">)</span> <span class="c1"># IFFT of complex frequency domain returns complex output. We want real pixel intensity values.
+</span>    <span class="n">compressed_image_clipped</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">clip</span><span class="p">(</span><span class="n">compressed_image_real</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+    <span class="n">compressed_image_uint8</span> <span class="o">=</span> <span class="n">compressed_image_clipped</span><span class="p">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">compressed_image_uint8</span>
+
+
+<span class="c1"># Binary Search for correct filtering radius based off defined compression ratio
+</span>
+<span class="k">def</span> <span class="nf">find_optimal_radius</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">target_compression_ratio</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
+
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">image</span><span class="p">.</span><span class="n">shape</span>
+
+    <span class="n">max_radius</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">rows</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">cols</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">max_radius</span>
+
+    <span class="n">original_image_filename</span> <span class="o">=</span> <span class="s">'original_image.png'</span>
+    <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">original_image_filename</span><span class="p">,</span> <span class="n">image_grey</span><span class="p">)</span>
+    <span class="n">original_image_size</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">original_image_filename</span><span class="p">)</span>
+
+    <span class="n">optimal_radius</span> <span class="o">=</span> <span class="n">max_radius</span> <span class="c1"># Default value
+</span>   
+    <span class="k">while</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
+
+        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">low</span> <span class="o">+</span> <span class="n">high</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span>
+
+        <span class="n">compressed_image</span> <span class="o">=</span> <span class="n">apply_fft_and_mask</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">mid</span><span class="p">)</span>
+        <span class="n">compressed_image_filename</span> <span class="o">=</span> <span class="s">'compressed_image_temp.png'</span>
+        <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">compressed_image_filename</span><span class="p">,</span> <span class="n">compressed_image</span><span class="p">)</span>
+        <span class="n">compressed_image_size</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">compressed_image_filename</span><span class="p">)</span>
+
+        <span class="n">compression_ratio</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">original_image_size</span> <span class="o">/</span> <span class="n">compressed_image_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">compression_ratio</span> <span class="o">-</span> <span class="n">target_compression_ratio</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tolerance</span><span class="p">:</span>
+            <span class="n">optimal_radius</span> <span class="o">=</span> <span class="n">mid</span>
+            <span class="k">break</span>
+            
+        <span class="k">elif</span> <span class="n">compression_ratio</span> <span class="o">&lt;</span> <span class="n">target_compression_ratio</span><span class="p">:</span>
+            <span class="n">optimal_radius</span> <span class="o">=</span> <span class="n">mid</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">-</span><span class="mi">1</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">optimal_radius</span> <span class="o">=</span> <span class="n">mid</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span>
+            
+    <span class="k">return</span> <span class="n">optimal_radius</span>
+</code></pre></div></div>
+
+<h3 id="technical-notes-on-the-compression--search-functionality">Technical notes on the Compression &amp; Search functionality</h3>
+
+<ol>
+  <li>
+    <p>To save the original and compressed images into image files for file size comparison, we used the .PNG file format, because it does not introduce any lossy compression in the process.</p>
+  </li>
+  <li>
+    <p>There was a tolerance given to each algorithm’s compression ratio during the binary search, because the level of compression precision afforded by each algorithm is inherently different. For example, we do compression in SVD by removing singular values one-by-one. Therefore, the precision of our compression is limited by the magnitude of the singular value, and the number of singular values.</p>
+  </li>
+</ol>
+
+<h3 id="explaining-the-testing-metrics">Explaining the testing metrics</h3>
+
+<p>In order to assess the performance of the two image compression algorithms in Section 5, we need to ensure that we are collecting data that fits our performance metrics.</p>
+
+<p>We chose to use the following three quantitative metrics for our assessments:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/e2c48109-7ef0-4dc4-8342-90d7e0298cba.png" style="max-width: 90%;" />
+</div>
+
+<p>While there are other quantitative metrics to evaluate image quality loss, such as Structural Similarity Index (SSIM), and simple ones like Mean Squared Error (MSE), we decided that PSNR is a good general metric for loss of image quality, and it is widely used in image compression tools as a primary metric as well. For simplicity’s sake, we will use PSNR.</p>
+
+<p>In addition, there will be qualitative metrics like our own human-perceived quality measure of image quality.</p>
+
+<h2 id="5-results--analysis">5. Results &amp; Analysis</h2>
+
+<p>In this section, we will firstly visualize the results of image compression for a sample compression ratio of 1.5.</p>
+
+<p>Then, we will discuss some interesting observations, and discuss their potential root causes.</p>
+
+<p>Finally, we will use our quantitative metrics to analyze our images and discuss some of the quantitative results.</p>
+
+<h3 id="svd--ft-for-all-images-at-sample-compression-ratio-of-15">SVD &amp; FT for all images at sample compression ratio of 1.5</h3>
+
+<p>Here, we apply the above SVD and FT operations on all images in our dataset, for a sample compression ratio of 1.5. We also captured details about compressed image size (original_image_size, compressed_image_size_svd, compressed_image_size_fft) and also computation time (elapsed_time_svd, elapsed_time_fft) in preparation for our later sections involving quantitative analysis.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sorted_images</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s">'coffee'</span><span class="p">,</span>
+    <span class="s">'coins'</span><span class="p">,</span>
+    <span class="s">'astronaut'</span><span class="p">,</span>
+    <span class="s">'page'</span><span class="p">,</span>
+    <span class="s">'eagle'</span><span class="p">,</span>
+    <span class="s">'grass'</span><span class="p">,</span>
+    <span class="s">'gravel'</span><span class="p">,</span>
+    <span class="s">'camera'</span><span class="p">,</span>
+    <span class="s">'cat'</span><span class="p">,</span>
+    <span class="s">'colorwheel'</span><span class="p">,</span>
+    <span class="s">'rocket'</span><span class="p">,</span>
+    <span class="s">'text'</span><span class="p">,</span>
+    <span class="s">'clock'</span><span class="p">,</span>
+    <span class="s">'brick'</span><span class="p">,</span>
+    <span class="s">'logo'</span><span class="p">,</span>
+    <span class="s">'checkerboard'</span><span class="p">,</span>
+    <span class="s">'binary_blobs'</span><span class="p">,</span>
+    <span class="s">'horse'</span><span class="p">)</span>
+
+
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sorted_images</span><span class="p">:</span>
+
+    <span class="n">start_time_svd</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="n">image_array</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)()</span>
+    <span class="n">image_grey</span> <span class="o">=</span> <span class="n">image_to_greyscale</span><span class="p">(</span><span class="n">image_array</span><span class="p">)</span>
+
+
+    <span class="n">target_compression_ratio</span> <span class="o">=</span> <span class="mf">1.5</span>
+    
+    
+    <span class="n">num_singular_values</span> <span class="o">=</span> <span class="n">find_optimal_singular_values</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">target_compression_ratio</span><span class="p">)</span>
+    <span class="n">compressed_image_svd</span> <span class="o">=</span> <span class="n">svd_image_compress</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">num_singular_values</span><span class="p">)</span>
+
+    <span class="n">elapsed_time_svd</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time_svd</span>
+
+    <span class="n">start_time_fft</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="n">optimal_radius</span> <span class="o">=</span> <span class="n">find_optimal_radius</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">target_compression_ratio</span><span class="p">)</span>
+    <span class="n">compressed_image_fft</span> <span class="o">=</span> <span class="n">apply_fft_and_mask</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">optimal_radius</span><span class="p">)</span>
+    
+    <span class="n">elapsed_time_fft</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time_fft</span>
+    
+    <span class="n">original_image_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s">'original_image_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">.png'</span>
+    <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">original_image_filename</span><span class="p">,</span> <span class="n">image_grey</span><span class="p">)</span>
+    <span class="n">original_image_size</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">original_image_filename</span><span class="p">)</span>
+    
+    <span class="n">compressed_image_filename_svd</span> <span class="o">=</span> <span class="sa">f</span><span class="s">'compressed_image_svd_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">.png'</span>
+    <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">compressed_image_filename_svd</span><span class="p">,</span> <span class="n">compressed_image_svd</span><span class="p">)</span>
+    <span class="n">compressed_image_size_svd</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">compressed_image_filename_svd</span><span class="p">)</span>
+    
+    <span class="n">compressed_image_filename_fft</span> <span class="o">=</span> <span class="sa">f</span><span class="s">'compressed_image_fft_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">.png'</span>
+    <span class="n">imageio</span><span class="p">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">compressed_image_filename_fft</span><span class="p">,</span> <span class="n">compressed_image_fft</span><span class="p">)</span>
+    <span class="n">compressed_image_size_fft</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">compressed_image_filename_fft</span><span class="p">)</span>
+    
+    <span class="c1"># Plotting original and compressed images
+</span>    
+    <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+    
+    <span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"Original"</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">compressed_image_svd</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"SVD"</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="p">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">compressed_image_fft</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="s">"FT"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_0.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_1.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_2.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_3.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_4.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_5.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_6.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_7.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_8.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_9.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_10.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_11.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_12.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_13.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_14.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_15.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_16.png" style="max-width: 90%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_26_17.png" style="max-width: 90%;" />
+</div>
+
+<h3 id="preliminary-observations--discussion">Preliminary observations &amp; discussion</h3>
+
+<p>In general, we can see a degradation in compression performance for both SVD and FT as the Shannon Entropy of the images decreases. For instance, at the same compression ratio of 1.5, both the SVD and FT compressed “coffee” image look closer to their original image, than compared to another case like “logo” or “horse”.</p>
+
+<p>This could be because low entropy images may lack enough detail and texture to support a higher compression ratio, making the compressed image lack a lot of the (minimal) information required to look like the original image.</p>
+
+<p>Next, when qualitatively comparing SVD and FT compression of the same image, the FT compressed image generally looks closer to the original as compared to the SVD compressed image. For instance, for “camera”:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/2f1f8b31-ee78-4ab1-b4a0-97a5154e6e33.png" style="max-width: 100%;" />
+</div>
+
+<p>This could be because FT decomposes an image into frequency components, which is efficient at preserving periodic structures and gradual changes, which are often found in images containing natural objects. On the other hand, SVD’s non-localized basis (of singular vectors) don’t capture localized detail well, which may lead to quality loss for detailed objects.</p>
+
+<p>SVD compressed images that appear low quality usually have strong “orthogonal” blurriness in their compressed images. On the other hand, when a FT compressed image appears low quality, it usually has some “ringing” effect.</p>
+
+<p>However, an interesting observation is that when the compression ratio is too high for both algorithms (usually only on images with low entropy, containing strongly simple shapes or repeating patterns), the SVD compression is able to return some “orthogonal lines” that faintly approximate the general pixel density of the original image, while the FT compression may return an empty-looking image. For example:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/cd302b79-5b31-4368-8638-09f2c5d493f4.png" style="max-width: 100%;" />
+</div>
+
+<p>This has a very interesting consequence: the SVD-compressed images that belong in this specific situation actually have a bigger file size than the original image - meaning, after being “decomposed” into its constituent singular vectors, and reconstructing to form the above orthogonal lines, the image is actually more detailed, and takes up more storage space.</p>
+
+<p>For example, the table below shows the original, SVD-compressed and FT-compressed file sizes for “binary_blob” and “horse”:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/d73d9dee-3b8f-430a-85bd-1f2e2174afaf.png" style="max-width: 90%;" />
+</div>
+
+<p>This example shows how SVD-compression might have counterproductive compression effects.</p>
+
+<p>Moving on, since we can qualitatively ascertain that the low entropy images within our dataset may be poor candidates for comparing SVD and FT compression, we will conduct our quantitative assessment based on the images with top three highest entropy values: “coffee”, “coins”, and “astronaut”.</p>
+
+<h3 id="writing-a-function-to-calculate-psnr-for-compressed-images">Writing a function to calculate PSNR for compressed images</h3>
+
+<p>Now, let’s start off our quantitative analysis of our images by writing a function to calculate the PSNR for our compressed images.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_psnr</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">compressed</span><span class="p">):</span>
+    
+    <span class="c1"># Calculate Mean Squared Error (MSE)
+</span>    <span class="n">mse</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">((</span><span class="n">original</span> <span class="o">-</span> <span class="n">compressed</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># If MSE is zero, the images are identical; return a high PSNR
+</span>    <span class="k">if</span> <span class="n">mse</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s">'inf'</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate the maximum pixel value of the image
+</span>    <span class="n">max_pixel_value</span> <span class="o">=</span> <span class="mf">255.0</span>  <span class="c1"># Assuming 8-bit grayscale images, max value is 255
+</span>    
+    <span class="c1"># Calculate PSNR
+</span>    <span class="n">psnr</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">log10</span><span class="p">(</span><span class="n">max_pixel_value</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mse</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">psnr</span>
+</code></pre></div></div>
+
+<h3 id="plot-psnr--computation-time-for-svd--ft-on-top-3-candidate-images">Plot PSNR &amp; Computation Time for SVD &amp; FT on top 3 candidate images</h3>
+
+<p>Here, we calculate the PSNR and Computation Time upon conducting SVD and FT compression on our three chosen candidate images.</p>
+
+<p>For each image in our candidate image list, we constructed a while loop, which iterates through a range of compression_ratio values, starting from 1.0 and ending at 3.0, with a step value of 0.05.</p>
+
+<p>Then, for each iteration (or, each compression_ratio value), we store the PSNR and Computation Time values for each algorithm in a dictionary, named quantitative_data below. This dictionary will be used for plotting in the later stages of this script.</p>
+
+<p>Finally, for each candidate image, we plot the PSNR against Compression Ratio, and Computation Time against Compression Ratio. Both SVD and FT graphs are displayed on the same plot, for comparison.</p>
+
+<p>The focus is not on qualitative analysis of image quality. Also, to lower the computational load on my laptop, I chose not to display the compressed images for various compression_ratio values defined in the range.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">candidate_images</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s">'coffee'</span><span class="p">,</span>
+    <span class="s">'coins'</span><span class="p">,</span>
+    <span class="s">'astronaut'</span><span class="p">)</span>
+    
+
+<span class="n">quantitative_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span><span class="s">'compression_ratios'</span><span class="p">:</span> <span class="p">[],</span> <span class="s">'psnr_svd'</span><span class="p">:</span> <span class="p">[],</span> <span class="s">'psnr_fft'</span><span class="p">:</span> <span class="p">[],</span> <span class="s">'elapsed_time_svd'</span><span class="p">:</span> <span class="p">[],</span> <span class="s">'elapsed_time_fft'</span> <span class="p">:</span> <span class="p">[]}</span> 
+                     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">candidate_images</span><span class="p">}</span>
+
+
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">candidate_images</span><span class="p">:</span>
+    
+    <span class="n">image_array</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)()</span>
+    <span class="n">image_grey</span> <span class="o">=</span> <span class="n">image_to_greyscale</span><span class="p">(</span><span class="n">image_array</span><span class="p">)</span>
+
+
+    <span class="n">compression_ratio</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Starting compression ratio
+</span>
+    <span class="k">while</span> <span class="n">compression_ratio</span> <span class="o">&lt;</span> <span class="mf">3.0</span><span class="p">:</span>
+        
+        <span class="n">start_time_svd</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="c1"># Use the current compression_ratio to determine the number of singular values
+</span>        <span class="n">num_singular_values</span> <span class="o">=</span> <span class="n">find_optimal_singular_values</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">compression_ratio</span><span class="p">)</span>
+        <span class="n">compressed_image_svd</span> <span class="o">=</span> <span class="n">svd_image_compress</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">num_singular_values</span><span class="p">)</span>
+        
+        <span class="n">elapsed_time_svd</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time_svd</span>
+    
+        <span class="c1"># Calculate PSNR for SVD
+</span>        <span class="n">psnr_svd</span> <span class="o">=</span> <span class="n">calculate_psnr</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">compressed_image_svd</span><span class="p">)</span>
+        
+        <span class="n">start_time_fft</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="c1"># Use the current compression_ratio to determine the optimal radius
+</span>        <span class="n">optimal_radius</span> <span class="o">=</span> <span class="n">find_optimal_radius</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">compression_ratio</span><span class="p">)</span>
+        <span class="n">compressed_image_fft</span> <span class="o">=</span> <span class="n">apply_fft_and_mask</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">optimal_radius</span><span class="p">)</span>
+        
+        <span class="n">elapsed_time_fft</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time_fft</span>
+    
+        <span class="c1"># Calculate PSNR for FFT
+</span>        <span class="n">psnr_fft</span> <span class="o">=</span> <span class="n">calculate_psnr</span><span class="p">(</span><span class="n">image_grey</span><span class="p">,</span> <span class="n">compressed_image_fft</span><span class="p">)</span>
+        
+        <span class="c1"># Store values for plotting
+</span>        <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'compression_ratios'</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">compression_ratio</span><span class="p">)</span>
+        <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'psnr_svd'</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">psnr_svd</span><span class="p">)</span>
+        <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'psnr_fft'</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">psnr_fft</span><span class="p">)</span>
+        <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'elapsed_time_svd'</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">elapsed_time_svd</span><span class="p">)</span>
+        <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'elapsed_time_fft'</span><span class="p">].</span><span class="n">append</span><span class="p">(</span><span class="n">elapsed_time_fft</span><span class="p">)</span>
+        
+        <span class="c1"># Increment compression ratio
+</span>        <span class="n">compression_ratio</span> <span class="o">+=</span> <span class="mf">0.05</span>
+        
+
+
+<span class="c1"># Plot PSNR vs. Compression Ratio for each image
+</span><span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">candidate_images</span><span class="p">:</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'compression_ratios'</span><span class="p">],</span> <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'psnr_svd'</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">'SVD'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'compression_ratios'</span><span class="p">],</span> <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'psnr_fft'</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">'FT'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Compression Ratio'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'PSNR (dB)'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s">'PSNR vs. Compression Ratio for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+
+
+    <span class="n">plt</span><span class="p">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'compression_ratios'</span><span class="p">],</span> <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'elapsed_time_svd'</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">'SVD'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'compression_ratios'</span><span class="p">],</span> <span class="n">quantitative_data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">'elapsed_time_fft'</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s">'FT'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Compression Ratio'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Computation Time (S)'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s">'Computation Time vs. Compression Ratio for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_32_0.png" style="max-width: 80%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_32_1.png" style="max-width: 80%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_32_2.png" style="max-width: 80%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_32_3.png" style="max-width: 80%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_32_4.png" style="max-width: 80%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/svd-fft-for-personal-website_32_5.png" style="max-width: 80%;" />
+</div>
+
+<h3 id="quantitative-performance-analysis--discussion">Quantitative performance analysis &amp; discussion</h3>
+
+<p>Our quantitative analysis will be guided by our three primary metrics of Peak Signal-to-Noise Ratio (PSNR), Compression Ratio and Computation Time.</p>
+
+<p>Let’s analyze the PSNR - Compression Ratio plots first:</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/a0613510-bb54-4f2c-a9db-7f4b588ab29b.png" />
+</div>
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/06d95057-5888-4f9d-8194-797d4c38be12.png" />
+</div>
+<p><br /></p>
+
+<p>In the above PSNR - Compression Ratio plots, the orange curve represents the FT compressed images, while the blue curve represents the SVD compressed images.</p>
+
+<p>Given the formula of PSNR, having a higher PSNR is favorable for image quality.</p>
+
+<p>We can observe that the FT compression yields consistently greater PSNR values than SVD compression, which implies that FT compressed images generally have a better image quality. This is also supported by our qualitative observation earlier, that FT compressed images generally resemble their original versions better than SVD compressed images.</p>
+
+<p>However, we can also make an interesting observation that for increasing compression ratios, the fall in PSNR for FT is generally steeper than SVD. This might be explained by the fact that as compression ratio increases, FT-images lose high frequency details (fine details) faster, which PSNR is sensitive to. Whereas in SVD compression, only the “least important” singular values are removed first, so the core structure of the image is preserved longer, resulting in a slower drop in PSNR.</p>
+
+<p>Next, we will analyze the Computation Time - Compression Ratio plots.</p>
+
+<div style="text-align: center;">
+<img src="/assets/images/svd-fft-images/99a432a4-f4d4-48ae-a0b5-0b00d793c0e5.png" />
+</div>
+<p><br /></p>
+
+<p>We can observe that there is a general increasing trend in Computation Time as compression ratio increases.</p>
+
+<p>Another important observation is that SVD compression time is generally greater than FT compression times, with the exception for the “coins” image, where they seem roughly similar.</p>
+
+<p>An interesting observation is also that there are many unexpected “spikes” and “drops” in Computation Time as we span the range of possible compression ratios. Upon analysis, this may actually be attributed to two factors:</p>
+
+<ol>
+  <li>
+    <p>Effect of image content - for images with a lot of structures, like “coffee” (wood texture background) and “coins” (metal engraving texture within the coins), the compression algorithms may take longer at certain compression levels to determine which details to keep and discard.</p>
+  </li>
+  <li>
+    <p>Imperfect resource management (memory management and CPU load) on my computer - each iteration creates and stores new versions of compressed images, which may affect memory management and occasionally cause spikes in computation time from the allocation and deallocation of large matrices.</p>
+  </li>
+</ol>
+
+<p>However, the general increasing trend in Computation Time, and relative demand on Computation Time for SVT and FT are observable nonetheless!</p>
+
+<p><br /></p>
+
+<h2 id="6-conclusion">6. Conclusion</h2>
+
+<p>From the qualitative and quantitative analysis of our images, we can conclude that:</p>
+
+<ol>
+  <li>
+    <p>Qualitatively, FT-compressed images resemble their original versions with greater quality than SVD-compressed images. Even when both types of compressed images have visible defects, the “ringing effect” of FT seems more organic than the stark “orthogonal lines” of SVD (especially for images with natural subjects).</p>
+  </li>
+  <li>
+    <p>FT-compressed images have a greater overall PSNR than SVD-compressed images, so FT-compressed images look better.</p>
+  </li>
+  <li>
+    <p>FT-compressed images have a lower overall computation time than SVD-compressed images, so FT compression is also more efficient.</p>
+  </li>
+</ol>
+
+<p>To conclude our findings for this project, the Fourier Transform algorithm is preferred for image compression over Singular Value Decomposition.</p>
+
+<p>Moving forward, there are also some interesting avenues for further research. One promising direction is to extend the analysis to RGB images instead of only grayscale, allowing us to explore the effects of SVD and FT compression in the color domain.</p>
+
+<p>Given that human perception tends to be more sensitive to changes in luminance than chrominance, this investigation could reveal nuanced insights into how these compression algorithms impact color fidelity and visual quality.</p>
+
+<p>Finally, it would also be valuable to assess the performance of these compression techniques on a wider variety of image types, especially images with high-resolution and diverse subjects.</p>
+
+:ET

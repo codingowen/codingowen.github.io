@@ -1,0 +1,178 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Graph</title>
+  <script src="https://unpkg.com/force-graph"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    #graph-container {
+      width: 100%;
+      height: 100vh; /* Full-screen height */
+    }
+  </style>
+  <link href='/css/blog.css' rel='stylesheet'/>
+</head>
+
+<body>
+  <div class='nav'>
+    <ul class='wrap'>
+        <li><a href='/'>Home</a></li>
+        <li><a href='/projects.html'>Projects</a></li>
+        <li><a href='/blogs.html'>Technical Blog</a></li>
+        <li><a href='/knowledge_graph.html'>Knowledge Graph</a></li>
+    </ul>
+</div>
+  <div id="graph-container"></div>
+
+  <!-- Force-Graph JavaScript -->
+  <script>
+    // Initialize sets for tracking highlighted nodes and links
+    const highlightNodes = new Set();
+    const highlightLinks = new Set();
+    const concurrentnothighlightNodes = new Set();
+    const concurrentnothighlightLinks = new Set();
+    let hoverNode = null;
+
+    fetch('/knowledge_graph_data.json')
+    .then(response => response.json())
+    .then(graphData => {
+      const container = document.getElementById('graph-container');
+
+        // Calculate the degree of each node
+        const nodeDegrees = {};
+        graphData.links.forEach(link => {
+        nodeDegrees[link.source] = (nodeDegrees[link.source] || 0) + 1;
+        nodeDegrees[link.target] = (nodeDegrees[link.target] || 0) + 1;
+        });
+
+        const Graph = ForceGraph()(container)
+        .width(container.offsetWidth)
+        .height(container.offsetHeight)
+        .nodeId('id')
+        .nodeLabel('label')
+        .nodeCanvasObject((node, ctx, globalScale) => {
+            const ishoverNode = node === hoverNode;
+            const isHighlighted = highlightNodes.has(node) || node === hoverNode;
+            const connected = Array.from(highlightLinks).some(link => link.source.id === node.id || link.target.id === node.id);
+
+            const concnotHighlighted = concurrentnothighlightNodes.has(node);
+            const concnotConnected = Array.from(concurrentnothighlightLinks).some(link => link.source.id === node.id || link.target.id === node.id);
+  
+            // Determine node radius and font size based on degree
+            const degree = nodeDegrees[node.id] || 0;
+            const radius = 3 + (degree * 0.75); // Base radius + scaling factor
+            const fontSize = (4 + (degree * 0.2)); // Base font size + scaling factor
+
+            // Draw node circle
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
+
+            if (ishoverNode) {
+                    ctx.fillStyle = '#8f6aee';  // Highlighted and connected node color
+            } else if (isHighlighted && connected) {
+                    ctx.fillStyle = '#5c5c5c';
+            } else if (concnotHighlighted) {
+                    ctx.fillStyle = '#dedede';  // Highlighted and not connected node color
+            } else {
+                    ctx.fillStyle = '#5c5c5c';  // Default color for unhighlighted nodes
+            }
+
+            ctx.fill();
+
+            // Draw node label
+            const zoomLevel = globalScale; // Get the current zoom level
+            const fontOpacity = Math.max(0, Math.min(1, (zoomLevel-1.4)/2)); // Fade out as zoom increases
+
+            const label = node.label || node.id;
+
+            if (concnotHighlighted) {
+              ctx.font = `${fontSize}px Sans-Serif`;
+                ctx.fillStyle = '#dedede';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(label, node.x, node.y + 10);}
+
+            else if (fontOpacity > 0.4) {
+                ctx.font = `${fontSize}px Sans-Serif`;
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(label, node.x, node.y + 10);}
+
+            else if (0.2 < fontOpacity && fontOpacity < 0.4) {
+                ctx.font = `${fontSize}px Sans-Serif`;
+                ctx.fillStyle = `rgba(0, 0, 0, ${fontOpacity})`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(label, node.x, node.y + 10);}
+        })
+        .linkWidth(1)
+        //.linkDirectionalParticles(link => highlightLinks.has(link) ? 1 : 0) 
+        .linkDirectionalParticles(0)
+        .linkColor(link => highlightLinks.has(link) ? '#8f6aee' : '#d3d1d4') 
+        .onNodeClick(node => {
+          if (node.url) {
+            window.open(node.url, '_blank');
+          }
+        })
+        
+        .onNodeHover(node => {
+          hoverNode = node || null;
+          highlightNodes.clear();
+          highlightLinks.clear();
+          concurrentnothighlightNodes.clear(); 
+          concurrentnothighlightLinks.clear(); 
+
+          if (hoverNode) {
+            highlightNodes.add(hoverNode);
+
+            const visitedNodes = new Set();
+            const visitNode = (n) => {
+              if (!n || visitedNodes.has(n.id)) return;
+              visitedNodes.add(n.id);
+              highlightNodes.add(n);
+
+              graphData.links.forEach(link => {
+                if (link.source.id === hoverNode.id || link.target.id === hoverNode.id) {
+                  highlightLinks.add(link);
+                  const neighborId = (link.source.id === hoverNode.id) ? link.target.id : link.source.id;
+                  const neighbor = graphData.nodes.find(node => node.id === neighborId);
+                  if (!visitedNodes.has(neighborId)) visitNode(neighbor);;
+                } 
+              });
+            };
+            visitNode(hoverNode);
+
+            // Populate concurrentnothighlightLinks
+            graphData.links.forEach(link => {
+                if (!highlightLinks.has(link)) {
+                    concurrentnothighlightLinks.add(link); // Add links not in highlightLinks
+                };
+
+            graphData.nodes.forEach(node => {
+            if (!highlightNodes.has(node)) {
+            concurrentnothighlightNodes.add(node); // Add nodes not in highlightNodes
+                }
+          })
+        })}});
+
+        Graph.d3Force('x', d3.forceX().strength(0.07)) // Attract nodes to center on the x-axis
+        .d3Force('y', d3.forceY().strength(0.07))
+
+        // Add clustering force
+      Graph.d3Force('link') // Adjust link force for clustering
+        .distance(link => 100) // Shorter distances for tighter clusters
+        .strength(link => 1); // Stronger link forces for better clustering
+
+      Graph.graphData(graphData);
+
+      // Handle resizing
+      window.addEventListener('resize', () => {
+        Graph.width(container.offsetWidth).height(container.offsetHeight);
+      });
+    })
+    .catch(error => console.error('Error loading graph data:', error));
+</script>
+</body>
+</html>

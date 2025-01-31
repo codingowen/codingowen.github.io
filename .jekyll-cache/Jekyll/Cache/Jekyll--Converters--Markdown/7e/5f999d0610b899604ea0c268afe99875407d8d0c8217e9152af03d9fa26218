@@ -1,0 +1,24 @@
+I"�<p>When I first heard about the latest developments in LLMs and ML, I was excited about the potential for LLMs to serve as an intelligent, yet simple-to-use tool that greatly improved human - computer interactibility.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/berk_hack_team.jpg" height="auto" width="80%" />
+</div>
+
+<p><br /></p>
+
+<p>For the hackathon, my teammate and I innovated and designed a Smart Glasses concept that served as an IOT-enabled travel companion &amp; guide for the visually impaired.</p>
+
+<p>We used many low-cost sensors: a camera, mic, bone-conducting speaker, GPS module, and many more! To tie all the data together, we created a unified format and process that would be provided to the LLM. Users would be able to ask various questions into their mic, such as “Is there a water bottle in front of me” or “what street am I on?”</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/berk_hack_diagram1.jpg" height="auto" width="100%" />
+</div>
+
+<p><br /></p>
+
+<p>We also implemented a pre-trained depth perception model, as well as image processing (BEV Grid map creation) and used the A* Search algorithm to create a path-finding feature for our users.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/berk_hack_diagram2.jpg" height="auto" width="100%" />
+</div>
+:ET

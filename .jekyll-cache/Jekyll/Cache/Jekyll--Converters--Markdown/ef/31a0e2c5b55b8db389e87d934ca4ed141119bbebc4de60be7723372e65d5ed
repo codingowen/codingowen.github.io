@@ -1,0 +1,39 @@
+I"t<p>Performance Rotors (PR) develops drones and robotics solutions for data-acquisition in GPS-denied and confined space environments without risk to human lives.</p>
+
+<p>*Permission was received from my internship manager to display these projects in my technical portfolio.</p>
+
+<p>I worked on designing and developing mechanical solutions to many complex problems, and I had a great time! Here are some of the highlights:</p>
+
+<p><br /></p>
+
+<p>• Mechanical design of housing and mounting for new electrical components on a test drone. I also designed the antenna receiver mounts to minimize intrusiveness. The final result was a compact and aesthetic housing which permitted abundant airflow for the fan and heatsink.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/pr_bird_cad.jpg" height="auto" width="40%" />
+    <img class="post-image" src="/assets/images/pr_bird_drone.png" height="auto" width="40%" />
+</div>
+
+<p><br /></p>
+
+<p>• Innovation and development of 3D Printed ultrasonic generator housing and ultrasonic testing probe spring suspension system for Non-Destructive Testing (NDT) Operations.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/pr_udt_diagram1.jpg" height="auto" width="100%" />
+</div>
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/pr_udt_diagram2.jpg" height="auto" width="100%" />
+</div>
+
+<p><br /></p>
+
+<p>• Independent Product lead and mechanical design of drone powder payload release and mounting mechanism on a custom drone built for client company</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/pr_shutter_diagram1.jpg" height="auto" width="100%" />
+</div>
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/pr_shutter_diagram2.jpg" height="auto" width="100%" />
+</div>
+
+<p><br /></p>
+:ET

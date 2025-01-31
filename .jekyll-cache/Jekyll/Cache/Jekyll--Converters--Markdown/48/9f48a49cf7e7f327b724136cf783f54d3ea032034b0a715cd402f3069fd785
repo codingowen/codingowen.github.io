@@ -1,0 +1,9 @@
+I"<p>I spent quite a few months learning how to build an 8-bit breadboard computer from Ben Eater’s youtube series. I ordered the hardware and brought it back to Singapore with me after my internship in California.</p>
+
+<p>The build process was surprisingly long, with many hardware bugs along the way. I had to make multiple modifications along the way - decoupling capacitors, a debouncing mechanism for the system timer, clock-line noise isonation, and many more, to make the computer more stable.</p>
+
+<p>As a result, the 8-bit computer is able to run some simple arithmetic logic and instruction sequences. I made a Youtube video demonstrating the computer running through the fibonacci sequence.</p>
+
+<iframe width="100%" height="50%" src="https://www.youtube.com/embed/ArUsKhOw4H8?si=yZP12Dfc4pMMH-y1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""></iframe>
+
+:ET

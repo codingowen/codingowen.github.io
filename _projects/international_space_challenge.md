@@ -1,0 +1,28 @@
+---
+title: International Space Challenge 2022 - 2nd Place
+subtitle: Designed a novel high-voltage energy generator for a satellite to harness energy from electrons in the Van Allen's Belt region.
+shorttitle: International Space Challenge 2022
+image: 
+    - assets/images/space_team.jpeg
+    - assets/images/space_cad.png
+layout: default
+date: 2022-06-01
+custom_date: Summer 2022
+keywords: blogging, writing
+published: true
+---
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/space_team.jpeg" height=auto width="90%">
+</div>
+
+For this competition, we were tasked to design a satellite that would traverse the Van Allen's Belt region. We were also tasked to design an experimental payload that the satellite would bring up.
+
+
+We designed a novel High-Voltage Energy Generator (HEG) which would harness energy from the electrons in the Van Allen's Belt region and store it in a battery. The experimental payload was designed based off of a paper by Kolesnikov and Yakovlev in January 2008.
+
+My team and I worked on every aspect of the satellite design, from 3D CAD of the satellite structure, sourcing of components for telemetry, communication, electrical subsystems and many more. We also covered financial planning for the entire satellite mission and conducted a feasibility report.
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/space_cad.png" height=auto width="100%">
+</div>

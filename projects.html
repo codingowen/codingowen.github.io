@@ -1,0 +1,80 @@
+---
+title: projects
+permalink: /projects.html
+---
+
+<html>
+<head>
+    <title>Owen Li</title>
+    <meta charset='UTF-8'>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+
+    <meta name='description' content='Owen is a Masters student at the National University of Singapore.'>
+    <!-- A decent browser will parse this fine:
+         https://webmasters.stackexchange.com/questions/92744. -->
+    <meta name='keywords' content='
+        machine learning,
+        statistical machine learning,
+        bayesian inference,
+        statistics,
+        computational statistics,
+        linear algebra,
+        numerical linear algebra,
+        statistical software,
+        deep learning,
+        computer science
+    '>
+    <meta name='author' content='Owen Li'>
+
+    <link rel='shortcut icon' href='/favicon.png?v=e' />
+    <link href='/css/blog.css' rel='stylesheet'/>
+
+    {% include mathjax.html %}
+</head>
+<body>
+    {% include nav.html %}
+    <div id='blog' class='wrap'>
+        <div id='intro'>
+            <div class='quote'>
+                <p>There are secrets to our world that only practice can reveal, and no opinion or analysis will ever
+                    capture in full. This secret property is, of course, revealed through time, and, thankfully, only
+                    through time.
+                </p>
+                <a href='https://en.wikipedia.org/wiki/Nassim_Nicholas_Taleb' target='_blank'>Nassim Nicholas Taleb</a>
+            </div>
+        </div>
+        <div id='posts' class='section'>
+            {% assign sorted_projects = site.projects | sort: 'date' | reverse %}
+            {% for post in sorted_projects %}  <!-- references jekyll collection -->
+                <div class='post-row'>
+                    <p class='post-title'>
+                        <a href="{{ post.url }}">
+                            {% katexmm %}
+                            {{ post.title }}
+                            {% endkatexmm %}
+                        </a>
+                    </p>
+                    <p class='post-custom_date'>
+                        {{ post.custom_date }}
+                    </p>
+                </div>
+                <p class='post-subtitle'>
+                    {% katexmm %}
+                    {{ post.subtitle }}
+                    {% endkatexmm %}
+                </p>
+                {% if post.image %}
+                <div class="post-image">
+                    {% for image in post.image %}
+                        <img src="{{ image }}" class="side-by-side">
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <br>
+                <br>
+                <span class='hidden'>{{ forloop.index }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

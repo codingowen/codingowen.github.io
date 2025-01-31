@@ -1,0 +1,88 @@
+<html>
+<head>
+    <title>UC Berkeley AI Hackathon</title>
+    <meta charset='UTF-8'>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+
+    <meta name='description' content='Owen Li is a graduate student in ML at the National University of Singapore.'>
+    <meta name='keywords' content='blogging, writing'>
+    <meta name='author' content='Owen Li'>
+
+    <link href='/css/blog.css' rel='stylesheet'/>
+    <link href='/css/trac.css' rel='stylesheet'/>
+    <link href='/css/markdown.css' rel='stylesheet'/>
+    <script type='text/x-mathjax-config'>
+MathJax.Hub.Config({
+  jax: ['input/TeX', 'output/HTML-CSS'],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+    extensions: ['color.js']
+  },
+  messageStyle: 'none',
+  'HTML-CSS': { preferredFont: 'TeX', availableFonts: ['STIX','TeX'] }
+});
+</script>
+
+<script src='//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML' type='text/javascript'></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+</head>
+<body>
+<div class='content'>
+    <div class='nav'>
+    <ul class='wrap'>
+        <li><a href='/'>Home</a></li>
+        <li><a href='/projects.html'>Projects</a></li>
+        <li><a href='/blogs.html'>Technical Blog</a></li>
+        <li><a href='/knowledge_graph.html'>Knowledge Graph</a></li>
+    </ul>
+</div>
+    <div class='front-matter'>
+        <div class='wrap'>
+            <h1>UC Berkeley AI Hackathon</h1>
+            <h4>Smart glasses that served as an IOT-enabled travel companion & guide for the visually impaired.</h4>
+            <div class='bylines'>
+                <div class='byline'>
+                    <h3>Published</h3>
+                    <p>01 June 2023</p>
+                </div>
+            </div>
+            <div class='clear'></div>
+        </div>
+    </div>
+    <div class='wrap article'>
+        <p>When I first heard about the latest developments in LLMs and ML, I was excited about the potential for LLMs to serve as an intelligent, yet simple-to-use tool that greatly improved human - computer interactibility.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/berk_hack_team.jpg" height="auto" width="80%" />
+</div>
+
+<p><br /></p>
+
+<p>For the hackathon, my teammate and I innovated and designed a Smart Glasses concept that served as an IOT-enabled travel companion &amp; guide for the visually impaired.</p>
+
+<p>We used many low-cost sensors: a camera, mic, bone-conducting speaker, GPS module, and many more! To tie all the data together, we created a unified format and process that would be provided to the LLM. Users would be able to ask various questions into their mic, such as “Is there a water bottle in front of me” or “what street am I on?”</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/berk_hack_diagram1.jpg" height="auto" width="100%" />
+</div>
+
+<p><br /></p>
+
+<p>We also implemented a pre-trained depth perception model, as well as image processing (BEV Grid map creation) and used the A* Search algorithm to create a path-finding feature for our users.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/berk_hack_diagram2.jpg" height="auto" width="100%" />
+</div>
+
+    </div>
+    <div id='bibliography'>
+        <div class='wrap'>
+            <ol class="bibliography"></ol>
+        </div>
+    </div>
+</div>
+</body>
+</html>

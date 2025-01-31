@@ -1,0 +1,131 @@
+---
+layout: null
+---
+{
+    "nodes": [
+      {"id": "Robotics",
+        "label": "Robotics"},
+
+      {"id": "ME/EE",
+        "label": "Traditional ME/EE"},
+
+      {"id": "Machine Learning",
+       "label": "Machine Learning"},
+
+      {"id": "Linear Algebra",
+       "label": "Linear Algebra"},
+
+      {"id": "Fourier Analysis",
+       "label": "Fourier Analysis"},
+
+      {"id": "Optimization Algorithms",
+       "label": "Optimization Algorithms"},
+    
+      {% for project in site.projects %}
+      {
+        "id": "{{ project.title | slugify }}",
+        "label": "{{ project.shorttitle }}",
+        "url": "{{ project.url | relative_url }}"
+      },
+      {% endfor %}
+
+      {% for post in site.posts %}
+      {
+        "id": "{{ post.title | slugify }}",
+        "label": "{{ post.shorttitle }}",
+        "url": "{{ post.url | relative_url }}"
+      }{% if forloop.last == false %},{% endif %}
+      {% endfor %}
+    ],
+
+    "links": [
+        {"source": "3-d-printed-gesture-tracking-robot-hand",
+         "target": "Robotics"},
+
+        {"source": "drone-mechanical-design-internship-at-performance-rotors",
+         "target": "Robotics"},
+
+        {"source": "drone-mechanical-design-internship-at-performance-rotors",
+         "target": "ME/EE"},
+
+        {"source": "international-space-challenge-2022-2nd-place",
+         "target": "Robotics"},
+
+        {"source": "uc-berkeley-ai-hackathon",
+         "target": "Robotics"},
+        
+        {"source": "uc-berkeley-ai-hackathon",
+         "target": "Machine Learning"},
+        
+        {"source": "stanford-wildfire-hackathon",
+         "target": "Machine Learning"}, 
+
+        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+         "target": "Robotics"},
+
+        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+         "target": "ME/EE"},
+        
+        {"source": "8-bit-breadboard-computer",
+         "target": "ME/EE"},
+        
+        {"source": "nus-sustainable-innovation-competition-1st-place",
+         "target": "ME/EE"},
+        
+        {"source": "james-dyson-award-competition",
+         "target": "ME/EE"},
+        
+        {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+         "target": "Linear Algebra"},
+        
+         {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+         "target": "Fourier Analysis"},
+
+
+
+         
+
+        {"source": "a-revision-of-linear-algebra",
+         "target": "Linear Algebra"},
+    
+        {"source": "basis-functions-in-linear-regression-models-with-an-ols-example",
+         "target": "Linear Algebra"},
+        
+        {"source": "basis-functions-in-linear-regression-models-with-an-ols-example",
+         "target": "Machine Learning"},
+
+        {"source": "the-kernel-trick",
+         "target": "Linear Algebra"},
+
+        {"source": "the-kernel-trick",
+         "target": "Machine Learning"},
+
+        {"source": "visualizing-some-essential-transformation-matrices",
+         "target": "Linear Algebra"},
+      
+        {"source": "how-i-learned-the-fourier-transform-intuitively",
+         "target": "Fourier Analysis"},
+
+        {"source": "an-intuition-of-eigenvalue-spectral-decomposition",
+         "target": "Linear Algebra"},
+        
+        {"source": "an-intuition-of-singular-value-decomposition",
+         "target": "Linear Algebra"},
+
+        {"source": "an-intuition-of-singular-value-decomposition",
+         "target": "an-intuition-of-eigenvalue-spectral-decomposition"},
+
+        {"source": "gaussian-copula-models",
+         "target": "Machine Learning"},
+
+        {"source": "time-series-synthetic-data-generation-internship-at-govtech",
+         "target": "Machine Learning"},
+
+        {"source": "Optimization Algorithms",
+         "target": "Machine Learning"},
+
+         {"source": "hessian-matrices-for-convex-optimization",
+         "target": "Optimization Algorithms"}
+    ]
+  }
+  

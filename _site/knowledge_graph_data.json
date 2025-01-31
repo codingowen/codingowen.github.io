@@ -1,0 +1,242 @@
+{
+    "nodes": [
+      {"id": "Robotics",
+        "label": "Robotics"},
+
+      {"id": "ME/EE",
+        "label": "Traditional ME/EE"},
+
+      {"id": "Machine Learning",
+       "label": "Machine Learning"},
+
+      {"id": "Linear Algebra",
+       "label": "Linear Algebra"},
+
+      {"id": "Fourier Analysis",
+       "label": "Fourier Analysis"},
+
+      {"id": "Optimization Algorithms",
+       "label": "Optimization Algorithms"},
+    
+      
+      {
+        "id": "3-d-printed-gesture-tracking-robot-hand",
+        "label": "Gesture Tracking Robot Hand",
+        "url": "/projects/3d_printed_hand/"
+      },
+      
+      {
+        "id": "drone-mechanical-design-internship-at-performance-rotors",
+        "label": "Drone Mechanical Design",
+        "url": "/projects/performance_rotors_internship/"
+      },
+      
+      {
+        "id": "james-dyson-award-competition",
+        "label": "Origami Container Design",
+        "url": "/projects/dyson_competition/"
+      },
+      
+      {
+        "id": "international-space-challenge-2022-2nd-place",
+        "label": "International Space Challenge 2022",
+        "url": "/projects/international_space_challenge/"
+      },
+      
+      {
+        "id": "nus-sustainable-innovation-competition-1st-place",
+        "label": "NUS Sustainable Innovation Competition",
+        "url": "/projects/nus_circular_economy_challenge/"
+      },
+      
+      {
+        "id": "uc-berkeley-ai-hackathon",
+        "label": "UC Berkeley AI Hackathon",
+        "url": "/projects/berkeley_AI_hackathon/"
+      },
+      
+      {
+        "id": "stanford-wildfire-hackathon",
+        "label": "Stanford Wildfire Hackathon",
+        "url": "/projects/stanford_wildfire_hackathon/"
+      },
+      
+      {
+        "id": "food-recycler-systems-engineering-internship-at-mill-industries",
+        "label": "Food Recycler Systems Engineering",
+        "url": "/projects/mill_industries_internship/"
+      },
+      
+      {
+        "id": "8-bit-breadboard-computer",
+        "label": "8-bit Breadboard Computer",
+        "url": "/projects/8_bit_computer/"
+      },
+      
+      {
+        "id": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+        "label": "Dimensionality-Reduction Algorithms for Image Compression",
+        "url": "/projects/svd_ft_image_compression/"
+      },
+      
+      {
+        "id": "time-series-synthetic-data-generation-internship-at-govtech",
+        "label": "Time-Series Synthetic Data Generation",
+        "url": "/projects/time_series_SDG_govtech/"
+      },
+      
+
+      
+      {
+        "id": "gaussian-copula-models",
+        "label": "Gaussian Copula",
+        "url": "/blog/2025/01/24/gaussian_copula/"
+      },
+      
+      {
+        "id": "hessian-matrices-for-convex-optimization",
+        "label": "Hessian Matrices",
+        "url": "/blog/2025/01/17/hessian_convex_optimization/"
+      },
+      
+      {
+        "id": "an-intuition-of-singular-value-decomposition",
+        "label": "Singular Value Decomposition",
+        "url": "/blog/2024/12/05/singular_value_decomposition/"
+      },
+      
+      {
+        "id": "an-intuition-of-eigenvalue-spectral-decomposition",
+        "label": "Eigenvalue (Spectral) Decomposition",
+        "url": "/blog/2024/11/02/eigendecomposition/"
+      },
+      
+      {
+        "id": "how-i-learned-the-fourier-transform-intuitively",
+        "label": "Fourier Transform",
+        "url": "/blog/2024/11/01/fourier_transform/"
+      },
+      
+      {
+        "id": "visualizing-some-essential-transformation-matrices",
+        "label": "Visualizing Essential Matrices",
+        "url": "/blog/2024/11/01/visualize_essential_matrices/"
+      },
+      
+      {
+        "id": "the-kernel-trick",
+        "label": "Kernel Trick",
+        "url": "/blog/2024/10/23/kernel_trick/"
+      },
+      
+      {
+        "id": "basis-functions-in-linear-regression-models-with-an-ols-example",
+        "label": "Basis Functions",
+        "url": "/blog/2024/10/22/basis_functions_and_OLS/"
+      },
+      
+      {
+        "id": "a-revision-of-linear-algebra",
+        "label": "Linear Algebra Review",
+        "url": "/blog/2024/10/21/linear_algebra_review/"
+      },
+      
+      {
+        "id": "an-introductory-post",
+        "label": "Blog Intro",
+        "url": "/blog/2024/10/20/intro/"
+      }
+      
+    ],
+
+    "links": [
+        {"source": "3-d-printed-gesture-tracking-robot-hand",
+         "target": "Robotics"},
+
+        {"source": "drone-mechanical-design-internship-at-performance-rotors",
+         "target": "Robotics"},
+
+        {"source": "drone-mechanical-design-internship-at-performance-rotors",
+         "target": "ME/EE"},
+
+        {"source": "international-space-challenge-2022-2nd-place",
+         "target": "Robotics"},
+
+        {"source": "uc-berkeley-ai-hackathon",
+         "target": "Robotics"},
+        
+        {"source": "uc-berkeley-ai-hackathon",
+         "target": "Machine Learning"},
+        
+        {"source": "stanford-wildfire-hackathon",
+         "target": "Machine Learning"}, 
+
+        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+         "target": "Robotics"},
+
+        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+         "target": "ME/EE"},
+        
+        {"source": "8-bit-breadboard-computer",
+         "target": "ME/EE"},
+        
+        {"source": "nus-sustainable-innovation-competition-1st-place",
+         "target": "ME/EE"},
+        
+        {"source": "james-dyson-award-competition",
+         "target": "ME/EE"},
+        
+        {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+         "target": "Linear Algebra"},
+        
+         {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+         "target": "Fourier Analysis"},
+
+
+
+         
+
+        {"source": "a-revision-of-linear-algebra",
+         "target": "Linear Algebra"},
+    
+        {"source": "basis-functions-in-linear-regression-models-with-an-ols-example",
+         "target": "Linear Algebra"},
+        
+        {"source": "basis-functions-in-linear-regression-models-with-an-ols-example",
+         "target": "Machine Learning"},
+
+        {"source": "the-kernel-trick",
+         "target": "Linear Algebra"},
+
+        {"source": "the-kernel-trick",
+         "target": "Machine Learning"},
+
+        {"source": "visualizing-some-essential-transformation-matrices",
+         "target": "Linear Algebra"},
+      
+        {"source": "how-i-learned-the-fourier-transform-intuitively",
+         "target": "Fourier Analysis"},
+
+        {"source": "an-intuition-of-eigenvalue-spectral-decomposition",
+         "target": "Linear Algebra"},
+        
+        {"source": "an-intuition-of-singular-value-decomposition",
+         "target": "Linear Algebra"},
+
+        {"source": "an-intuition-of-singular-value-decomposition",
+         "target": "an-intuition-of-eigenvalue-spectral-decomposition"},
+
+        {"source": "gaussian-copula-models",
+         "target": "Machine Learning"},
+
+        {"source": "time-series-synthetic-data-generation-internship-at-govtech",
+         "target": "Machine Learning"},
+
+        {"source": "Optimization Algorithms",
+         "target": "Machine Learning"},
+
+         {"source": "hessian-matrices-for-convex-optimization",
+         "target": "Optimization Algorithms"}
+    ]
+  }
+  

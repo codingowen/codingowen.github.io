@@ -124,8 +124,11 @@ layout: null
         {"source": "Optimization Algorithms",
          "target": "Machine Learning"},
 
-         {"source": "hessian-matrices-for-convex-optimization",
-         "target": "Optimization Algorithms"}
+        {"source": "hessian-matrices-for-convex-optimization",
+         "target": "Optimization Algorithms"},
+
+        {"source": "building-a-neural-network-from-scratch",
+         "target": "Machine Learning"}
     ]
   }
   

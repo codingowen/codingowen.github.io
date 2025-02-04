@@ -74,6 +74,12 @@
       },
       
       {
+        "id": "building-a-neural-network-from-scratch",
+        "label": "Neural Network From Scratch",
+        "url": "/projects/neural_network_from_scratch/"
+      },
+      
+      {
         "id": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
         "label": "Dimensionality-Reduction Algorithms for Image Compression",
         "url": "/projects/svd_ft_image_compression/"
@@ -235,8 +241,11 @@
         {"source": "Optimization Algorithms",
          "target": "Machine Learning"},
 
-         {"source": "hessian-matrices-for-convex-optimization",
-         "target": "Optimization Algorithms"}
+        {"source": "hessian-matrices-for-convex-optimization",
+         "target": "Optimization Algorithms"},
+
+        {"source": "building-a-neural-network-from-scratch",
+         "target": "Machine Learning"}
     ]
   }
   

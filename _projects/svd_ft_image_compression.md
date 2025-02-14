@@ -1,11 +1,11 @@
 ---
-title: SVD & FT Dimensionality-Reduction Algorithms for Image Compression
+title: Image Compression Algorithms using Singular Value Decomposition & Fourier Transform
 subtitle: In this project, I study the effectiveness of Singular Value Decomposition and the Fourier Transform on image compression tasks. 
 shorttitle: Dimensionality-Reduction Algorithms for Image Compression
 image: 
     - assets/images/svd_compression_licky_cat.png
 layout: default
-date: 2024-11-01
+date: 2024-10-01
 custom_date: Fall 2024
 keywords: blogging, writing
 published: true

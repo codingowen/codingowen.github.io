@@ -1,5 +1,5 @@
 ---
-title: Food Recycler Systems Engineering (Internship at Mill Industries)
+title: Hardware Systems Engineering (Internship at Mill Industries)
 subtitle: Grinder motor design, pneumatically-actuated factory test fixtures, automated sensor data collection, experimentation & analysis systems.
 shorttitle: Food Recycler Systems Engineering
 image: 

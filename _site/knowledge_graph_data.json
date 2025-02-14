@@ -62,7 +62,7 @@
       },
       
       {
-        "id": "food-recycler-systems-engineering-internship-at-mill-industries",
+        "id": "hardware-systems-engineering-internship-at-mill-industries",
         "label": "Food Recycler Systems Engineering",
         "url": "/projects/mill_industries_internship/"
       },
@@ -74,15 +74,27 @@
       },
       
       {
+        "id": "image-compression-algorithms-using-singular-value-decomposition-fourier-transform",
+        "label": "Dimensionality-Reduction Algorithms for Image Compression",
+        "url": "/projects/svd_ft_image_compression/"
+      },
+      
+      {
         "id": "building-a-neural-network-from-scratch",
         "label": "Neural Network From Scratch",
         "url": "/projects/neural_network_from_scratch/"
       },
       
       {
-        "id": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
-        "label": "Dimensionality-Reduction Algorithms for Image Compression",
-        "url": "/projects/svd_ft_image_compression/"
+        "id": "building-a-recurrent-neural-network-rnn-from-scratch",
+        "label": "RNN From Scratch",
+        "url": "/projects/recurrent_nn_from_scratch/"
+      },
+      
+      {
+        "id": "building-long-short-term-memory-lstm-from-scratch",
+        "label": "LSTM From Scratch",
+        "url": "/projects/lstm_from_scratch/"
       },
       
       {
@@ -177,10 +189,10 @@
         {"source": "stanford-wildfire-hackathon",
          "target": "Machine Learning"}, 
 
-        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+        {"source": "hardware-systems-engineering-internship-at-mill-industries",
          "target": "Robotics"},
 
-        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+        {"source": "hardware-systems-engineering-internship-at-mill-industries",
          "target": "ME/EE"},
         
         {"source": "8-bit-breadboard-computer",
@@ -192,15 +204,11 @@
         {"source": "james-dyson-award-competition",
          "target": "ME/EE"},
         
-        {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+        {"source": "image-compression-algorithms-using-singular-value-decomposition-fourier-transform",
          "target": "Linear Algebra"},
         
-         {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+         {"source": "image-compression-algorithms-using-singular-value-decomposition-fourier-transform",
          "target": "Fourier Analysis"},
-
-
-
-         
 
         {"source": "a-revision-of-linear-algebra",
          "target": "Linear Algebra"},
@@ -245,6 +253,12 @@
          "target": "Optimization Algorithms"},
 
         {"source": "building-a-neural-network-from-scratch",
+         "target": "Machine Learning"},
+
+        {"source": "building-a-recurrent-neural-network-rnn-from-scratch",
+         "target": "Machine Learning"},
+
+        {"source": "building-long-short-term-memory-lstm-from-scratch",
          "target": "Machine Learning"}
     ]
   }

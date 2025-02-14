@@ -1,0 +1,8 @@
+I"=<p>In this project, we’re going to build a simple Long Short Term Memory (LSTM)-based recurrent model from scratch, using NumPy.</p>
+
+<p>We’ll employ the LSTM model on the same task as our previous RNN model, and find out which model produces better song lyrics.</p>
+
+<p>Given the foundational knowledge on neural networks established in previous projects, we’ll move relatively quickly into the theory for RNNs.</p>
+
+<p>This project is also closely linked to the next one on Long Short-Term Memory (LSTM) networks, where we will improve on the RNN architecture.</p>
+:ET

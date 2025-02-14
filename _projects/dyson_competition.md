@@ -27,3 +27,7 @@ My team innovated and designed a folding lunchbox concept, and I lead my team of
 <div class="md-image-container">
     <img class="post-image" src="/assets/images/dyson_iteration.jpg" height=auto width="80%">
 </div>
+
+There is also a really cringe submission video on YouTube (with really loud audio, beware earphone users), but I guess it's a fun memory. In hindsight, we really should have chosen non-translucent silicone :P
+
+<iframe width="100%" height="50%" src="https://www.youtube.com/embed/itrOxe5Vj1c?si=1w4uKPE_Xpd0vkQG" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>

@@ -1,0 +1,26 @@
+I"�<p>In this project, we’re going to build a simple Long Short Term Memory (LSTM)-based recurrent model from scratch, using NumPy.</p>
+
+<p>We’ll employ the LSTM model on the same task as our previous RNN model, and find out which model produces better song lyrics.</p>
+
+<p>Given the foundational knowledge on RNNs established in previous projects, we’ll move relatively quickly into the theory for LSTMs.</p>
+
+<p>Here’s the structure for this project post:</p>
+
+<p>1. LSTM Overview</p>
+
+<p>2. Describing the LSTM mathematically</p>
+
+<p>2.1 Forward Propagation</p>
+
+<p>2.2 Backward Propagation</p>
+
+<p>2.2.1 Deriving Components In Backpropagation Through Time</p>
+
+<p>2.3 How LSTMs Solve Vanishing/Exploding Gradients</p>
+
+<p>3. Code Implementation &amp; Results</p>
+
+<h2 id="1-lstm-overview">1. LSTM Overview</h2>
+
+<p>In this section, we’ll cover the architecture of the LSTM cell, and examine how it improves upon the basic RNN model we learned in the previous project post.</p>
+:ET

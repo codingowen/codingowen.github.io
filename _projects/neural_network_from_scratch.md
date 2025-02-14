@@ -3,7 +3,7 @@ title: Building a Neural Network from scratch
 subtitle: In this project, I build an image classifying neural network using only NumPy and some math. 
 shorttitle: Neural Network From Scratch
 image: 
-    - assets/images/nn_from_scratch_cover.png
+    - assets/images/nn_from_scratch_cover2.png
 layout: default
 date: 2024-10-30
 custom_date: Fall 2024

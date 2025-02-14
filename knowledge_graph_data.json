@@ -60,10 +60,10 @@ layout: null
         {"source": "stanford-wildfire-hackathon",
          "target": "Machine Learning"}, 
 
-        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+        {"source": "hardware-systems-engineering-internship-at-mill-industries",
          "target": "Robotics"},
 
-        {"source": "food-recycler-systems-engineering-internship-at-mill-industries",
+        {"source": "hardware-systems-engineering-internship-at-mill-industries",
          "target": "ME/EE"},
         
         {"source": "8-bit-breadboard-computer",
@@ -75,15 +75,11 @@ layout: null
         {"source": "james-dyson-award-competition",
          "target": "ME/EE"},
         
-        {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+        {"source": "image-compression-algorithms-using-singular-value-decomposition-fourier-transform",
          "target": "Linear Algebra"},
         
-         {"source": "svd-ft-dimensionality-reduction-algorithms-for-image-compression",
+         {"source": "image-compression-algorithms-using-singular-value-decomposition-fourier-transform",
          "target": "Fourier Analysis"},
-
-
-
-         
 
         {"source": "a-revision-of-linear-algebra",
          "target": "Linear Algebra"},
@@ -128,6 +124,12 @@ layout: null
          "target": "Optimization Algorithms"},
 
         {"source": "building-a-neural-network-from-scratch",
+         "target": "Machine Learning"},
+
+        {"source": "building-a-recurrent-neural-network-rnn-from-scratch",
+         "target": "Machine Learning"},
+
+        {"source": "building-long-short-term-memory-lstm-from-scratch",
          "target": "Machine Learning"}
     ]
   }

@@ -1,2 +1,0 @@
-I"{<p>So I got curious about the topic of image compression one afternoon, and realized I needed to understand the Fourier Transform. The Fourier Transform extends the Fourier Series to handle non-periodic signals, and “transforms” the input signal from the time/spatial domain to the frequency domain. This allows us to analyze a given signal from a frequency perspective.</p>
-:ET

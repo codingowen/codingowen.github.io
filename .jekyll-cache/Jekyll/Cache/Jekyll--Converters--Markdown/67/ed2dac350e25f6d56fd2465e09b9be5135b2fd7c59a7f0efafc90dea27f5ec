@@ -1,2 +1,0 @@
-I"3<p>In one ‘Convex Optimization Algorithms’ class, we learned about the necessary conditions for being a ‘local minimizer’ of a given function $f(x)$. One of the conditions stated that, for a point $x_0$ to be a local minimizer of $f(x)$, the Hessian $H_f (x_0)$ has to be positive semidefinite.</p>
-:ET

@@ -98,12 +98,24 @@
       },
       
       {
+        "id": "building-the-self-attention-mechanism-of-large-language-models-from-scratch",
+        "label": "Self-Attention From Scratch",
+        "url": "/projects/self_attention/"
+      },
+      
+      {
         "id": "time-series-synthetic-data-generation-internship-at-govtech",
         "label": "Time-Series Synthetic Data Generation",
         "url": "/projects/time_series_SDG_govtech/"
       },
       
 
+      
+      {
+        "id": "visualizing-the-self-attention-mechanism",
+        "label": "Visualizing Self-Attention",
+        "url": "/blog/2025/02/27/self_attention_intuition/"
+      },
       
       {
         "id": "gaussian-copula-models",
@@ -259,6 +271,12 @@
          "target": "Machine Learning"},
 
         {"source": "building-long-short-term-memory-lstm-from-scratch",
+         "target": "Machine Learning"},
+        
+        {"source": "building-the-self-attention-mechanism-of-large-language-models-from-scratch",
+         "target": "Machine Learning"},
+        
+        {"source": "visualizing-the-self-attention-mechanism",
          "target": "Machine Learning"}
     ]
   }

@@ -1,0 +1,15 @@
+I""<p>In this project, we’re going to implement the Self-Attention mechanism used in the Transformer architecture.</p>
+
+<p>This post will begin with a short, intuitive recap of how the attention mechanism works, followed by a code-along section where we implement the attention mechanism for calculating the attention scores of input text sentences.</p>
+
+<p>Here’s the structure for this project post:</p>
+
+<p>1. Quick recap on how Self-Attention works <br />
+2. Code Implementation of Self-Attention Mechanism <br />
+3. References</p>
+
+<p>*Additionally, I’d like to mention that I did a proper detailed writeup on how the Self-Attention mechanism works geometrically. Please check it out here</p>
+
+<h2 id="1-quick-recap-on-how-self-attention-works">1. Quick Recap on how Self-Attention works</h2>
+
+:ET

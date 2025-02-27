@@ -1,0 +1,19 @@
+I" <p><b><u>This blog is a Work-in-progress due to the ongoing nature of the internship.</u></b></p>
+
+<p>Govtech Singapore is a government agency which functions as the tech arm of Singaporeâ€™s government. It builds tech-based products to make live better for citizens, businesses, international audiences and the public service sector.</p>
+
+<p>During my internship, I was attached to the Data Engineering Practice, making data-focused products to help other government agencies.</p>
+
+<p>More specific details about the project can be published once my work is open-sourced for educating other government agencies (~ May 2025).</p>
+
+<p>Some expected technical learnings from the project include:</p>
+<ul>
+  <li>Large-scale ML experiment design</li>
+  <li>Literature review of sequential (mostly time-series) synthetic data generation techniques</li>
+  <li>In-depth study and exploration of relevant ML models (Probabilistic Autoregressive, GANs, Fourier analysis-based models, Diffusion models, Transformer hybrid models, etc.)</li>
+  <li>White paper research / publication / writing</li>
+</ul>
+
+<p>The white paper is expected to be open-sourced at the end of the project as well.</p>
+
+:ET

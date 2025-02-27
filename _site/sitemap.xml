@@ -41,6 +41,10 @@
 <lastmod>2025-01-24T00:00:00+08:00</lastmod>
 </url>
 <url>
+<loc>http://localhost:4000/blog/2025/02/27/self_attention_intuition/</loc>
+<lastmod>2025-02-27T00:00:00+08:00</lastmod>
+</url>
+<url>
 <loc>http://localhost:4000/projects/3d_printed_hand/</loc>
 <lastmod>2021-01-01T00:00:00+08:00</lastmod>
 </url>
@@ -93,8 +97,12 @@
 <lastmod>2025-01-11T00:00:00+08:00</lastmod>
 </url>
 <url>
+<loc>http://localhost:4000/projects/self_attention/</loc>
+<lastmod>2025-01-12T00:00:00+08:00</lastmod>
+</url>
+<url>
 <loc>http://localhost:4000/projects/time_series_SDG_govtech/</loc>
-<lastmod>2025-05-01T00:00:00+08:00</lastmod>
+<lastmod>2025-02-01T00:00:00+08:00</lastmod>
 </url>
 <url>
 <loc>http://localhost:4000/blogs.html</loc>

@@ -1,0 +1,152 @@
+I"�/<p>In this project, we’re going to learn about the Self-Attention mechanism used in the recent Transformer architecture.</p>
+
+<p>This post will begin with an intuitive explanation of how the attention mechanism works, followed by a code-along section where we implement the attention mechanism for calculating the attention scores of input text sentences.</p>
+
+<p>Here’s the structure for this project post:</p>
+
+<p>1. Intuitive Explanation of Attention <br />
+1.1 Embeddings &amp; Context <br />
+1.2 Similarity <br />
+1.3 Attention Weights <br />
+1.4 Keys &amp; Queries Matrices <br />
+1.5 Values Matrix <br />
+1.6 Self &amp; Multi-Headed Attention <br />
+2. Code Implementation of Self-Attention Mechanism <br />
+3. References</p>
+
+<h2 id="1-intuitive-explanation-of-attention">1. Intuitive Explanation of Attention</h2>
+
+<p>In this chapter, we will go through some intuitive explanations of Attention and its core components. We’ll cover the role of embedding, context and similarity measures, before going deeper into defining Attention, and the K-Q-V components.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="11-embeddings-and-context">1.1 Embeddings and Context</h3>
+
+<p>Let’s begin with an input sentence. We need to represent this sentence mathematically, so that it can work with our various machine learning models.</p>
+
+<p>To do this, we will represent each word (or token) in the sentence as a vector.</p>
+
+<p>As we know, a vector in 3D space might look like [1, 2, 3], representing coordinates along three dimensions. In the context of text, when we embed a word as a vector, we convert it into a similar ordered list of numbers.</p>
+
+<p>Each dimension of the embedding vector represents different aspects of meaning, or relationships between the words.</p>
+
+<p>Embedding vectors are used to capture the semantics of our input text such that similar inputs are close to each other in the embedding space.</p>
+
+<p>Here’s a simple but clarifying example:</p>
+
+<p>Let’s say we have a bunch of words representing fruits, such as ‘Orange’, ‘Banana’, etc. We also have a bunch of words representing technology products, such as ‘Android’, ‘Microsoft’, etc.</p>
+
+<p>Now, we embed the input words to a 2D embedding space:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_1.png" height="auto" width="55%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_2.png" height="auto" width="75%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Now, the question is, where would you put the word ‘Apple’? It could both refer to the fruit, or the tech company.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_3.png" height="auto" width="75%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Well, to figure this out, naturally, we would look at the context of the whole input sentence.</p>
+
+<p>For example, given an input sentence ‘Please buy an Apple and an Orange’, then we know for sure ‘Apple’ refers to the fruit. On the other hand, if the sentence was ‘Apple unveiled their new phone’, then we would know that ‘Apple’ refers to the tech company.</p>
+
+<p>Then, we’ll embed the word ‘Apple’ closer to the relevant context-providing word!</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_4.png" height="auto" width="100%" />
+</div>
+
+<p>So, each word needs to be given context, which is derived from the neighbouring words. So in the case of the first sentence involving apples and oranges, we’d move the word ‘Apple’ closer to the word ‘Orange’ in the embedding space, where the word ‘Apple’ and ‘Orange’ contribute to each other’s ‘fruit’ context. The mechanism is the same for the second sentence.</p>
+
+<p>In the case of the Attention mechanism, context refers to the information gathered from other words in the sentence, that influences the representation of a given word. To be clear, ‘context’ is not a single variable or metric, but rather an emergent property of how tokens are related and influence each other dynamically based on meaning and position.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="12-similarity">1.2 Similarity</h3>
+
+<p>Now, hopefully we see why understanding the context of the input text helps us decide on the best way to represent the relationships between the input words (via their embeddings).</p>
+
+<p>In the earlier example, we saw how the word ‘Apple’ moves closer to ‘Orange’ in the embedding space when our input text refers to fruits. This means that words with similar meanings are represented as vectors that are close together in the embedding space, while unrelated words are farther apart.</p>
+
+<p>Okay, then the next question naturally becomes, how do we know that we’ve embedded our words correctly? Meaning, how do we know when similar words like ‘Apple’ and ‘Orange’ have been correctly embedded to be vectors that lie closer to each other?</p>
+
+<p>To do that, we’ll need a way to measure the similarity of the embedded vectors!</p>
+
+<p>One common way we measure similarity is by using the <b>Dot Product</b> of the embedding vectors. We’ll illustrate how the Dot Product works:</p>
+
+<p>Firstly, recall that in the embedding space, each dimension represents some relationship or meaning within the input text. For example, given our earlier input words (‘Orange’, ‘Android’, etc.), our 2D embedding space could include one dimension representing the ‘Fruit’ characteristic and one dimension representing the ‘Tech’ characteristic of our input text, like so:</p>
+
+<p>Let’s say we have the following setup:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_5.png" height="auto" width="80%" />
+</div>
+
+<p>Then, the dot product computation would be like so:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_6.png" height="auto" width="100%" />
+</div>
+
+<p>We can see that words that are similar, like ‘Apple’ and ‘Orange’, will have a greater dot product value, while words that are dissimilar will have a smaller dot product value.</p>
+
+<p>Additionally, we can see how the dot product of the ‘Orange’ and ‘Android’ embedding vectors would be 0 (due to their orthogonality). This ensures that words that are purely about fruits and words that are purely about tech have no dot product similarity.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>However, the Dot Product is not a perfect measure of similarity, because it can be influenced by the magnitude of vectors involved. There are other measures of similarity like Cosine Similarity, but the original Attention Mechanism in the 2017 paper uses something called <b>Scaled Dot Product Similarity</b>.</p>
+
+<p>The Scaled Dot Product is simply the Dot Product divided by the square root of the length of the vector.</p>
+
+<p>Okay, to summarize what we’ve learnt so far:</p>
+<ul>
+  <li>We need to embed words as vectors in an embedding space.</li>
+  <li>To determine the optimal embedding location for each word, we need to understand the context of each sentence.</li>
+  <li>To measure how well we’ve embedded similar words together, we will measure the similarity of their embedding vectors, using tools like the Dot Product, Cosine Similarity, or Scaled Dot Product Similarity.</li>
+</ul>
+
+<h3 id="13-attention-weights">1.3 Attention Weights</h3>
+
+<p>Now, we’ll learn how to compute Attention Weights/Scores. Attention Weights represent how much focus we should give to the other words in an input sentence when processing each word in it.</p>
+
+<p>Let’s say we have an 3D embedding for the words ‘Orange’, ‘Apple’ and ‘Phone’, along with grammatical words like ‘and’ and ‘an’, like so:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_7.png" height="auto" width="80%" />
+</div>
+
+<p>Let’s find the similarity value between each pair of words (i.e. each pair of embedded vectors). For simplicity of computation, we’ll use Cosine Similarity, but you can imagine that any other similarity measure would work too.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_8.png" height="auto" width="100%" />
+</div>
+
+<p>This pairwise similarity measure will help us understand how the existing words in an input sentence will influence each other word.</p>
+
+<p>Take for example, given the input sentence ‘An Apple And An Orange’, and the pairwise similarity table:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_9.png" height="auto" width="100%" />
+</div>
+
+<p>Another example - what if our input sentence was ‘An Apple Phone’?</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_10.png" height="auto" width="100%" />
+</div>
+
+<p>So now, we have a way to mathematically describe how much each other word in an input sentence influences, or provides context to each word:</p>
+
+:ET

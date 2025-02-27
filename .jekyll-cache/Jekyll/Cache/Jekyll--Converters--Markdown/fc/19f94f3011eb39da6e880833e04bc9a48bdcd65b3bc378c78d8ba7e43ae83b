@@ -1,0 +1,17 @@
+I"�<p>In this project, we’re going to learn about the Self-Attention mechanism used in the recent Transformer architecture.</p>
+
+<p>This post will begin with a short, intuitive explanation of how the attention mechanism works, followed by a code-along section where we implement the attention mechanism for calculating the attention scores of input text sentences.</p>
+
+<p>Here’s the structure for this project post:</p>
+
+<p>1. Intuitive Explanation of Attention <br />
+1.1 Embeddings &amp; Context <br />
+1.2 Similarity <br />
+1.3 Attention <br />
+1.4 Keys &amp; Queries Matrices <br />
+1.5 Values Matrix <br />
+1.6 Self Attention <br />
+2. Code Implementation of Self-Attention Mechanism <br />
+3. References</p>
+
+:ET

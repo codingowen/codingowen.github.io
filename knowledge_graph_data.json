@@ -130,6 +130,12 @@ layout: null
          "target": "Machine Learning"},
 
         {"source": "building-long-short-term-memory-lstm-from-scratch",
+         "target": "Machine Learning"},
+        
+        {"source": "building-the-self-attention-mechanism-of-large-language-models-from-scratch",
+         "target": "Machine Learning"},
+        
+        {"source": "visualizing-the-self-attention-mechanism",
          "target": "Machine Learning"}
     ]
   }

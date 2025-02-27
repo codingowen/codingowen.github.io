@@ -19,15 +19,11 @@ Given the foundational knowledge on RNNs established in previous projects, we'll
 
 Here's the structure for this project post:
 
-1\. LSTM Overview
-
-2\. Forward Propagation
-
-2.1 Backward Propagation
-
-2.2 How LSTMs Solve Vanishing/Exploding Gradients
-
-3\. Code Implementation & Results
+1\. LSTM Overview \\
+2\. Forward Propagation \\
+2.1 Backward Propagation \\
+2.2 How LSTMs Solve Vanishing/Exploding Gradients \\
+3\. Code Implementation & Results 
 
 
 ## 1. LSTM Overview

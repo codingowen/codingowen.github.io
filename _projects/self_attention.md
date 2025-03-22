@@ -324,6 +324,6 @@ Okay! That's the Scaled Dot-Product Self-Attention Mechanism implemented in code
 
 ### 2. References
 
-This project post was primarily an exercise in re-implementing and modifying Sebastian Raschka's excellent blog post on the same topic.<a href="https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html" target="_blank">excellent blog post on the same topic</a>
+This project post was primarily an exercise in re-implementing and modifying Sebastian Raschka's <a href="https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html" target="_blank">excellent blog post on the same topic</a>
 
 I also found this code implementation by Mohd. Faraaz <a href="https://mohdfaraaz.medium.com/implementing-self-attention-from-scratch-in-pytorch-776ef7b8f13e" target="_blank">a good reference and sanity check.</a>

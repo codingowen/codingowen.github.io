@@ -1,0 +1,597 @@
+I"�3<p>In this project, we’re going to implement a Vision Transformer (ViT) for image classification, on the CIFAR-10 image dataset.</p>
+
+<p>Given that we’ve laid the theoretical foundation for the attention mechanism before, this will be more of a code-along post with some theory guiding us along the way.</p>
+
+<p>I trained the ViT on a 10-class image classification task for only 50 epochs, and got a 63% test accuracy, which is about 6 times better than random guessing, but still nowhere near a SoTA CNN. ViTs usually take hundreds to thousands of epochs of training and a metric ton of data to shine, so this project is mostly for learning and simple, unoptimized demonstration.</p>
+
+<p>Really quickly though, here’s a cool visualization of how our ViT learns to compute attention over the images:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_12.png" height="auto" width="100%" />
+</div>
+
+<p>We’ll see how this is implemented in the following sections.</p>
+
+<p>Here’s the structure for this project post:</p>
+
+<p>1. Quick recap on how Self-Attention works <br />
+2. Overview of the Vision Transformer architecture <br />
+3. Code-along each portion of the ViT <br />
+       3.1 Transform input images into embeddings <br />
+       3.2 Pass through the Transformer Encoder <br />
+       3.3 Do image classification with CLS token <br />
+4. Results <br />
+5. References</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="1-quick-recap-on-self-attention">1. Quick recap on Self-Attention</h3>
+
+<p>In the Self-Attention mechanism, we represent words as vectors in an embedding space. By considering the context of other words, our machine learning model can learn to embed word vectors better, and improve at NLP tasks.</p>
+
+<p>To consider the context of other words, we compare the embedding vectors and calculate their similarity score. In the embedding space, similar tokens will share a similar location, so token vectors that are located closely in the embedding space will have a higher similarity score.</p>
+
+<p>As we go through the self-attention mechanism in transformer encoder blocks, the position of each word embedding vector is updated to better reflect the meaning of each token with respect to its context (the other relevant words within the same sentence).</p>
+
+<p>Recall this diagram from our previous blog post:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/attention_14.png" height="auto" width="100%" />
+</div>
+
+<p>The initial embedding for the token “Apple” is the same for each possible interpretation of “Apple”, whether as a fruit or as a technology brand. By passing the tokens through the attention encoder block(s), the “Apple” token is pushed towards its context-based meaning. So, the encoder with attention layers can add contextual meaning to embeddings.</p>
+
+<p>Usually, in Transformer-based architectures, there are several “encoder” blocks. Each encoder block consists of normalization layers, multi-head attention layers and a multilayer perceptron (MLP) component.</p>
+
+<p>Each of these encoder blocks encodes more information into the embeddings by taking into account the context, which produces a deeper semantic representation of each token. At the end of this process, we get our optimized/improved embeddings.</p>
+
+<p>To transform these information-rich embeddings into useful predictions, we need a final set of layers, which are usually called the “head”. Different heads are used for different tasks, such as classification, question-answering, Named Entity Recognition (NER), etc.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_2.png" height="auto" width="80%" />
+</div>
+
+<p>The Vision Transformer works similarly, but rather than taking in word tokens, the ViT takes in image patches. Aside from that, the overall transformer architecture stays very similar for the ViT.</p>
+
+<p>Next, we’ll do an overview of the ViT architecture, and make sense of the core components.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="2-overview-of-the-vision-transformer-architecture">2. Overview of the Vision Transformer architecture</h3>
+
+<p>This is the overall vision transformer architecture:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_3.png" height="auto" width="100%" />
+</div>
+
+<p>The Vision Transformer (ViT) is inspired by transformer architectures used in NLP, particularly BERT (an encoder-only transformer model).</p>
+
+<p>The key idea behind ViT is to represent an image as a sequence of smaller, non-overlapping image patches, which are treated as input tokens similar to words in NLP. These patch embeddings are then processed by a transformer model, enabling the network to capture spatial relationships and patterns across the entire image.</p>
+
+<p>Looking at the overall diagram, we can break the ViT into the following series of components/steps:</p>
+<ol>
+  <li>Transform input images into embeddings</li>
+  <li>Pass through the Transformer Encoder</li>
+  <li>Do image classification with CLS token</li>
+</ol>
+
+<p>Next, we will run through any relevant theory for each portion, while implementing in code as we go along.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="3-code-along-each-portion-of-the-vit">3. Code-along each portion of the ViT</h3>
+
+<p>The changes introduced by the ViT are mostly limited to the first few processing steps, so most of the accompanying theoretical explanation will be focused on section 3.1 coming next.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="31-transform-input-images-into-embeddings">3.1 Transform input images into embeddings</h3>
+
+<p>We need to take an input image and first process it into a set of patch embeddings.</p>
+
+<p>Some might ask: why not go more granular and feed in pixel values of the image directly? Well, self-attention requires comparing every input token with all other tokens (as part of learning context). If we were to process a small $32$×$32$ image at the pixel level, we would have $32^2 = 1024$ individual pixel tokens. Since self-attention has quadratic complexity (i.e., each token attends to every other token), this results in $1024^2=1,048,576$ attention computations per layer — and that’s just for a single attention layer in a multi-layer Transformer! This would be a computational nightmare.</p>
+
+<p>Instead, we partition the image into patches, treating each patch as a token. These patches are then embedded into a lower-dimensional representation, significantly reducing the number of tokens while still capturing meaningful spatial information, before further processing.</p>
+
+<p>Here’s a high-level overview of the steps we need to take:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_4.png" height="auto" width="100%" />
+</div>
+
+<ol>
+  <li>Split the image into non-overlapping image patches</li>
+  <li>Embed patches into lower-dimensional embeddings via linear projection</li>
+  <li>Pre-append trainable “class” embedding to set of patch embeddings</li>
+  <li>Sum our patch embeddings with learned positional embeddings</li>
+</ol>
+
+<p>After these steps, the patch embeddings are processed like token embeddings in a typical transformer. Let’s cover each sub-step in more detail</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h4 id="1-split-the-image-into-non-overlapping-image-patches">1. Split the image into non-overlapping image patches</h4>
+
+<p>Splitting the image into non-overlapping image patches is a simple process, analogous to how sentences are split into tokens for NLP tasks.</p>
+
+<p>Let’s assume a square image patch and define a variable, ‘patch_size’, which describes the size of our image patch, like so:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_5.png" height="auto" width="100%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h4 id="2-embed-patches-into-lower-dimensional-embeddings-via-linear-projection">2. Embed patches into lower-dimensional embeddings via linear projection</h4>
+
+<p>Next, we need to embed image patches into their embedded vector form. Let’s understand this mathematically.</p>
+
+<p>Let’s say we’re working with $32$x$32$ input images, in RGB form. Then, our input image is a $(3, 32, 32)$ tensor, where we have $3$ channels and a $32$x$32$ shape.</p>
+
+<p>Let’s say we define ‘patch_size’ to be 4, then each image patch would be a $(3, 4, 4)$ 3D tensor.</p>
+
+<p>The transformer expects each token to be a flat feature vector of a fixed dimension. Let’s call the dimensionality of our desired embedding vector as ‘hidden_size’.</p>
+
+<p>Since each image patch is in 3D tensor form, we need a linear projection to flatten each patch while perserving the structure, and to map the patch into a fixed-dimensional embedding vector. This operation is represented mathematically like so:</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>R</mi><mrow><mi>C</mi><mo>×</mo><mi>P</mi><mo>×</mo><mi>P</mi></mrow></msup><mo>→</mo><msup><mi>R</mi><mi>D</mi></msup></mrow><annotation encoding="application/x-tex"> 
+R^{C \times P \times P} \rightarrow R^D
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.891331em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.891331em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.07153em;">C</span><span class="mbin mtight">×</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span><span class="mbin mtight">×</span><span class="mord mathdefault mtight" style="margin-right:0.13889em;">P</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8913309999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913309999999999em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.02778em;">D</span></span></span></span></span></span></span></span></span></span></span></span></p>
+
+<p>Where C x P x P is the original shape of each image patch, and D is the ‘hidden_size’. This linear projection learns to extract features from the image patch, just like an embedding layer in NLP.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Let’s implement the two steps above in code. To do so, we’ll define a class ‘PatchEmbeddings’ to handle splitting an input image and embedding it as vectors, based on a user defined dictionary of variables called ‘config’:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">PatchEmbeddings</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    Converts an input image into patches, then projects patches into embedded vectors
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">image_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"image_size"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">patch_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"patch_size"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">num_channels</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"num_channels"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">num_patches</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">image_size</span> <span class="o">//</span> <span class="bp">self</span><span class="p">.</span><span class="n">patch_size</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">projection</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">num_channels</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> 
+                <span class="n">kernel_size</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">patch_size</span><span class="p">,</span> <span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">patch_size</span>
+                <span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">projection</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<p>Notice that we use the nn.Conv2d() convolution layer to do two things at once:</p>
+<ol>
+  <li>Split the image into patches, by defining kernel_size and stride as patch_size</li>
+  <li>Perform a linear projection up to the number of output channels, defined by hidden_size</li>
+</ol>
+
+<p>Let’s say our input is (B, 3, 32, 32), where we have B number of 32x32 RGB (3-channel) images, with patch_size of 4 and hidden_size of 48.</p>
+
+<p>So, passing (B, 3, 32, 32) into nn.Conv2d() outputs (B, 48, 8, 8) whereby we get 8x8 = 64 patches from splitting a 32x32 image into patch of patch_size 4.</p>
+
+<p>Then, passing the output (B, 48, 8, 8) into x.flatten(2).transpose(1,2), what happens is:</p>
+<ul>
+  <li>flatten(2) will collapse the last two dimensions (8x8) into one, so we now have (B, 48, 64)</li>
+  <li>transpose(1,2) helps us swap the axes of dimension 1 and 2, so we have (B, 64, 48). This is because transformers expect input of shape (batch_size, num_patches, embedding_dim)</li>
+</ul>
+
+<p>Hence, each image has been transformed into a sequence of 81 embedding vectors.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h4 id="3-pre-append-trainable-class-embedding-to-set-of-patch-embeddings">3. Pre-append trainable “class” embedding to set of patch embeddings</h4>
+
+<p>One feature introduced to transformers in the popular BERT models is the use of a [CLS] or “classification” token. The [CLS] is a special token prepended to every sentence inputted into BERT.</p>
+
+<p>In BERT, the [CLS] token does not represent any word from the input, instead it serves as a global representation of the entire sequence. After passing through multiple self-attention layers, its final embedding is used for classification.</p>
+
+<p>Transformers don’t have a built-in method for aggregating information. Thus, the ViT introduces a [CLS] token to:</p>
+<ul>
+  <li>Serve as a global representation of the entire image</li>
+  <li>Interact with all other patch embeddings via self-attention</li>
+  <li>Be used for final image classification</li>
+</ul>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_6.png" height="auto" width="100%" />
+</div>
+
+<p>The [CLS] token’s embedding is learned and optimized during training.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h4 id="4-sum-our-patch-embeddings-with-learned-positional-embeddings">4. Sum our patch embeddings with learned positional embeddings</h4>
+
+<p>Transformers treat all input tokens independently at first. The Self-Attention mechanism does not inherently recognize the order or spatial position of input tokens.</p>
+
+<p>What are the implications of this? Well, if we shuffle the input patches of two copies of the same image, the Vision Transformer would treat these as the same input since self-attention does not inherently track spatial positions. Then, the ViT would output the same result, which means our model has poor ability to understand images.</p>
+
+<p>To preserve spatial information in ViTs, we add position embeddings to the patch embeddings before feeding them into the Transformer, like so:</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>Patch Embeddings + Position Embeddings</mtext><mo>→</mo><mtext>Input to Transformer</mtext></mrow><annotation encoding="application/x-tex"> 
+\text{Patch Embeddings + Position Embeddings} \rightarrow \text{Input to Transformer}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Patch Embeddings + Position Embeddings</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Input to Transformer</span></span></span></span></span></span></p>
+
+<p>There are multiple ways to introduce position embeddings in ViTs, but the standard way used in the original ViT paper is to use Learnable Position Embeddings, which have the same dimensionality as our patch embeddings.</p>
+
+<p>Each patch index gets its own learnable position embedding, and during training, these embeddings are learned alongside the model.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p><b>One big question I had when learning about this topic was, why do we need to use learnable position embeddings?</b></p>
+
+<p>Earlier, we discussed the need for our model to have a spatial understanding of the image patches. Now, my question is, why do we need to use learnable position embeddings specifically?</p>
+
+<p>In the simplest case, if positional encodings were not learnable, but instead hardcoded, like using the actual (x,y) coordinates of each image patch, our model might not generalize across different spatial arrangements. For example, if the positional encodings were hardcoded, our network may not be able to interpret “cat at top of image” and “cat at bottom of image” in a similar way - causing our network to obtain rigid spatial biases about the image patches.</p>
+
+<p>Instead, learnable position embeddings allow the model to flexibly adapt its spatial understanding based on the data, helping it approximate or converge towards a form of translational invariance.</p>
+
+<p>Furthermore, in Appendix D.4 of the original ViT paper, the authors ran an ablation study on the effects of having different positional embeddings, and found that simply having any type of learnable position embedding (whether 1D, 2D or ‘relative’) was much better than not having any positional embedding at all.</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_7.png" height="auto" width="100%" />
+</div>
+
+<p>Here’s one last tidbit that might be interesting: you might notice that the additional [CLS] token we’re adding for classification is also getting a learnable positional embedding. Why?</p>
+
+<p>Well, the transformer architecture does not inherently distinguish between tokens, so without a positional embedding, the [CLS] token would be treated as just another image patch, and the model wouldn’t learn that it serves a global/higher-level purpose.</p>
+
+<p>In other words, having a unique learnable position embedding helps the model recognize that this token serves a special purpose. Then, through self-attention, the [CLS] token aggregates information from all patches, helping it summarize the image effectively.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Let’s implement the two steps above in code. To do so, we’ll define a class ‘Embeddings’ to combine our earlier patch embeddings with the [CLS] token and position embeddings:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">Embeddings</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    Combines original patch embeddings with [CLS] token and position embeddings
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">patch_embeddings</span> <span class="o">=</span> <span class="n">PatchEmbeddings</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">cls_token</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">position_embeddings</span> <span class="o">=</span> 
+            <span class="n">nn</span><span class="p">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">patch_embeddings</span><span class="p">.</span><span class="n">num_patches</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"hidden_dropout_prob"</span><span class="p">])</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">patch_embeddings</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">batch_size</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">cls_tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">cls_token</span><span class="p">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">cls_tokens</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">position_embeddings</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Notice that we initialize self.cls_token as a single learnable token with shape (1, 1, hidden_size), which represnts (one token, batch dimension placeholder, hidden_size)</li>
+  <li>Then, we initialize the self.position_embeddings as a learnable positional embedding tensor of shape (1, num_patches + 1, hidden_size). The first 1 shows that we have a single set of positional embeddings shared across all images, then for num_patches+1, we include the [CLS] token into the total number of patches.</li>
+  <li>We also expand the single [CLS] token to match the batch_size using self.cls_token.expand(batch_size, -1, -1). The -1 tells PyTorch to keep the original size for a particular dimension.</li>
+  <li>Then, we concatenate the [CLS] token to patch embeddings along dim = 1 (the sequence length dimension)</li>
+  <li>Finally, after adding the position_embeddings, we also apply self.dropout(x) for regularization!</li>
+</ul>
+
+<p>After this step is done, the input image is converted to a sequence of patch embeddings with positional information, ready to be fed into the transformer layer!</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="32-pass-through-the-transformer-encoder">3.2 Pass through the Transformer Encoder</h3>
+
+<p>In this section, we’ll build the Transformer Encoder to process our combined image patch embeddings. However, the Transformer Encoder is made up of many smaller components, as seen below:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_8.png" height="auto" width="100%" />
+</div>
+
+<p>So, we’ll focus on building the core component first, which is the Multi-Head Attention module.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="multi-head-attention-module">Multi-Head Attention Module</h3>
+
+<p>Multi-headed attention is used to compute the all pairwise self-attention interactions between image patches in the input image. The Multi-Head Attention Module consists of smaller attention heads, each of which computes self-attention independently over different learned feature subspaces.</p>
+
+<p>So, let’s begin by implementing a single self attention head first. Recall from our other blog post that the attention head takes in a sequence of embeddings and computes the K,Q,V matrices.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">AttentionHead</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    Single attention head
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">attention_head_size</span><span class="p">,</span> <span class="n">dropout</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">hidden_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">attention_head_size</span> <span class="o">=</span> <span class="n">attention_head_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">attention_head_size</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">attention_head_size</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">attention_head_size</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">bias</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">key</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># recall that Attention(K,Q,V) = SoftMax(QK^T/sqrt(head_size)) V
+</span>        <span class="n">attention_scores</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span> 
+        <span class="n">attention_scores</span> <span class="o">=</span> <span class="n">attention_scores</span> <span class="o">/</span> <span class="n">math</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">attention_head_size</span><span class="p">)</span>
+        <span class="n">attention_probs</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">atention_scores</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">attention_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attention_probs</span><span class="p">)</span>
+        <span class="n">attention_output</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">attention_probs</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">attention_output</span><span class="p">,</span> <span class="n">attention_probs</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<ul>
+  <li>Note that attention_head_size defines the reduced dimensionality per attention head.</li>
+  <li>So, we define K,Q,V transformation matrices as a fully connected nn.Linear layer, which map the input embeddings from hidden_size to attention_head_size.</li>
+</ul>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>In the Multi-Head Attention module, the outputs from all individual attention heads are concatenated and linearly projected to obtain the final output of the Multi-Head Attention module.</p>
+
+<p>Next, to implement the Multi-Head Attention module:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">MultiHeadAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    Multi-Head Attention module
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"num_attention_heads"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">attention_head_size</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">//</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">all_head_size</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">attention_head_size</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">kqv_bias</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"kqv_bias"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">ModuleList</span><span class="p">([])</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads</span><span class="p">):</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">AttentionHead</span><span class="p">(</span>
+                                 <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="p">.</span><span class="n">attention_head_size</span><span class="p">,</span>
+                                 <span class="n">config</span><span class="p">[</span><span class="s">"attention_probs_dropout_prob"</span><span class="p">],</span>
+                                 <span class="bp">self</span><span class="p">.</span><span class="n">kqv_bias</span>
+                                 <span class="p">)</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">heads</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">head</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="p">.</span><span class="n">output_projection</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">all_head_size</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">output_dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"hidden_dropout_prob"</span><span class="p">])</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="n">attention_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">head</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">.</span><span class="n">heads</span><span class="p">]</span>
+        <span class="n">attention_output</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">([</span><span class="n">attn_output</span> <span class="k">for</span> <span class="n">attn_output</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">attention_outputs</span><span class="p">],</span> <span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">attention_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">output_projection</span><span class="p">(</span><span class="n">attention_output</span><span class="p">)</span>
+        <span class="n">attention_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">output_dropout</span><span class="p">(</span><span class="n">attention_output</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_attentions</span><span class="p">:</span>
+            <span class="k">return</span><span class="p">(</span><span class="n">attention_output</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">attention_probs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">([</span><span class="n">attn_probs</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">attn_probs</span> <span class="ow">in</span> <span class="n">attention_outputs</span><span class="p">],</span> <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">attention_output</span><span class="p">,</span> <span class="n">attention_probs</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<ul>
+  <li>Notice the seemingly strange calculation for attention_head_size and all_head_size. While it seems obvious that all_head_size is equal to hidden_size, writing the code this way provides flexibility for hidden_size and all_head_size to be different if needed, in some uncommon implementations.</li>
+  <li>Even if all_head_size == hidden_size, having the nn.Linear() layer is crucial for re-weighting and mixing the contributions of different heads.</li>
+</ul>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="completing-the-transformer-encoder">Completing the Transformer Encoder</h3>
+
+<p>To complete one full transformer layer, we also need to implement the MLP layer, two normalization layers and skip connections.</p>
+
+<p>To implement the MLP layer, we’ll build a simple two-layer MLP with GELU activation in between:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    The Multi-Layer Perceptron module
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">dense_1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s">"intermediate_size"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">NewGELUActivation</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">dense_2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"intermediate_size"</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"hidden_dropout_prob"</span><span class="p">])</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dense_1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">activation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dense_2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+</code></pre></div></div>
+
+<p>Now that we have implemented the Multi-Headed Attention module and MLP layer, we can combine them to create the full transformer layer, along with the skip connections and layer normalization.</p>
+
+<p>We’ll call this class a “Block”, since multiple transformer layers (or “blocks”) will be stacked to form the full transformer encoder.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">Block</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    A single, full transformer layer. 
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="n">MultiHeadAttention</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layernorm_1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layernorm_2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">])</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="n">attention_output</span><span class="p">,</span> <span class="n">attention_probs</span> <span class="o">=</span> 
+            <span class="bp">self</span><span class="p">.</span><span class="n">attention</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">layernorm_1</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="n">output_attentions</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">attention_output</span>                    <span class="c1"># skip connection
+</span>        <span class="n">mlp_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">layernorm_2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">mlp_output</span>                          <span class="c1"># skip connection
+</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_attentions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">attention_probs</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<p>Then, we’ll build the full transformer encoder, which stacks multiple transformer layers sequentially.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">Encoder</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    Transformer Encoder module
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">ModuleList</span><span class="p">([])</span>
+        
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">"num_hidden_layers"</span><span class="p">]):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">Block</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">blocks</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="n">all_attentions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">attention_probs</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="n">output_attentions</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">output_attentions</span><span class="p">:</span>
+                <span class="n">all_attentions</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">attention_probs</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_attentions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">all_attentions</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="33-do-image-classification-with-cls-token">3.3 Do image classification with [CLS] token</h3>
+
+<p>Now that the full transformer encoder is implemented, we will obtain new/optimized embeddings for the image patches and the [CLS] token!</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_9.png" height="auto" width="100%" />
+</div>
+
+<p>To make these embeddings produce useful predictions, we’ll use the [CLS] token embedding as input to our classification layer.</p>
+
+<p>We will implement the classification layer as a fully connected layer that takes the full [CLS] embedding of “hidden_size”, and outputs logits for each image class.</p>
+
+<p>Here’s the code implementation for the full ViT classifier model:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">ViTClassifier</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    The full ViT model for image classification
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">image_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"image_size"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"hidden_size"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">"num_classes"</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">Embeddings</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_classes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="nb">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">_init_weights</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="n">embedding_output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">encoder_output</span><span class="p">,</span> <span class="n">all_attentions</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">embedding_output</span><span class="p">,</span> <span class="n">output_attentions</span> <span class="o">=</span> <span class="n">output_attentions</span><span class="p">)</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">classifier</span><span class="p">(</span><span class="n">encoder_output</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_attentions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">all_attentions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_init_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">)):</span>
+            <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">[</span><span class="s">"initializer_range"</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">module</span><span class="p">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="n">zeros_</span><span class="p">(</span><span class="n">module</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">LayerNorm</span><span class="p">):</span>
+            <span class="n">module</span><span class="p">.</span><span class="n">bias</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">zero_</span><span class="p">()</span>
+            <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
+            <span class="n">module</span><span class="p">.</span><span class="n">position_embeddings</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="n">trunc_normal_</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">.</span><span class="n">position_embeddings</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">float32</span><span class="p">),</span>
+                <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">std</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">[</span><span class="s">"initializer_range"</span><span class="p">],</span>
+            <span class="p">).</span><span class="n">to</span><span class="p">(</span><span class="n">module</span><span class="p">.</span><span class="n">position_embeddings</span><span class="p">.</span><span class="n">dtype</span><span class="p">)</span>
+
+            <span class="n">module</span><span class="p">.</span><span class="n">cls_token</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="n">trunc_normal_</span><span class="p">(</span>
+                <span class="n">module</span><span class="p">.</span><span class="n">cls_token</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">float32</span><span class="p">),</span>
+                <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">std</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">[</span><span class="s">"initializer_range"</span><span class="p">],</span>
+            <span class="p">).</span><span class="n">to</span><span class="p">(</span><span class="n">module</span><span class="p">.</span><span class="n">cls_token</span><span class="p">.</span><span class="n">dtype</span><span class="p">)</span>
+
+</code></pre></div></div>
+<ul>
+  <li>Note that _init_weights() ensures all parameters start with reasonable values, to avoid unstable training. It checks the type of layer and applies the correct model parameter initialization for all layers of the model. It uses the self.apply() function by PyTorch.</li>
+</ul>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="4-results">4. Results</h3>
+
+<p>In this section, we’ll review the results from training a image classifying ViT model. The full implementation was done in a jupyter notebook, which can be found here.</p>
+
+<p>Firstly, here’s a quick preview of what 32x32 images the CIFAR-10 dataset contains:</p>
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_10.png" height="auto" width="100%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>I trained the model for 100 epochs, and it attained a final test accuracy of 63%</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Here are two plots showing how training loss, validation loss and validation accuracy changed over the epochs:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_11.png" height="auto" width="80%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>And, perhaps most interesting of all, here’s a visualization of how the model computes attention over the images. We can see that the model learned to generally focus on the key subject/class of each image, and ignore the background:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_12.png" height="auto" width="100%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="5-references">5. References</h3>
+
+<p>This project post was primarily an exercise in re-implementing and slightly modifying Trung Tin Nguyen’s <a href="https://tintn.github.io/Implementing-Vision-Transformer-from-Scratch/" target="_blank">excellent blog post on the ViT</a>. I borrowed heavily from his teachings on the code implementation and theory, and I highly suggest a read through!</p>
+
+<p>I also found this walkthrough of the ViT by James Briggs <a href="https://www.pinecone.io/learn/series/image-search/vision-transformers/" target="_blank">an excellent reference and sanity check.</a> I also borrowed heavily from his intutive explanation of the theory, and if you already have a grasp of how Transformers work, I highly suggest this reference as your introduction to ViTs.</p>
+:ET

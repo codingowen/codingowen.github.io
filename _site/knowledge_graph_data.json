@@ -104,6 +104,12 @@
       },
       
       {
+        "id": "building-a-vision-transformer-vit-from-scratch",
+        "label": "Vision Transformer From Scratch",
+        "url": "/projects/vision_transformer/"
+      },
+      
+      {
         "id": "time-series-synthetic-data-generation-internship-at-govtech",
         "label": "Time-Series Synthetic Data Generation",
         "url": "/projects/time_series_SDG_govtech/"

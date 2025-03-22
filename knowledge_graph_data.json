@@ -136,6 +136,9 @@ layout: null
          "target": "Machine Learning"},
         
         {"source": "visualizing-the-self-attention-mechanism",
+         "target": "Machine Learning"},
+        
+        {"source": "building-a-vision-transformer-vit-from-scratch",
          "target": "Machine Learning"}
     ]
   }

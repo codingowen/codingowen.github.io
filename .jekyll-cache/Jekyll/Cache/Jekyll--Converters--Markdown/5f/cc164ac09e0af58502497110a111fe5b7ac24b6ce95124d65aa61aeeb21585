@@ -1,59 +1,4 @@
-<html>
-<head>
-    <title>Building the Self-Attention Mechanism of Large Language Models from scratch</title>
-    <meta charset='UTF-8'>
-    <meta content='width=device-width, initial-scale=1' name='viewport'/>
-
-    <meta name='description' content='Owen Li is a graduate student in ML at the National University of Singapore.'>
-    <meta name='keywords' content='blogging, writing'>
-    <meta name='author' content='Owen Li'>
-
-    <link href='/css/blog.css' rel='stylesheet'/>
-    <link href='/css/trac.css' rel='stylesheet'/>
-    <link href='/css/markdown.css' rel='stylesheet'/>
-    <script type='text/x-mathjax-config'>
-MathJax.Hub.Config({
-  jax: ['input/TeX', 'output/HTML-CSS'],
-  tex2jax: {
-    inlineMath: [ ['$', '$'] ],
-    displayMath: [ ['$$', '$$']],
-    processEscapes: true,
-    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-    extensions: ['color.js']
-  },
-  messageStyle: 'none',
-  'HTML-CSS': { preferredFont: 'TeX', availableFonts: ['STIX','TeX'] }
-});
-</script>
-
-<script src='//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML' type='text/javascript'></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
-</head>
-<body>
-<div class='content'>
-    <div class='nav'>
-    <ul class='wrap'>
-        <li><a href='/'>Home</a></li>
-        <li><a href='/projects.html'>Projects</a></li>
-        <li><a href='/blogs.html'>Technical Blog</a></li>
-        <li><a href='/knowledge_graph.html'>Knowledge Graph</a></li>
-    </ul>
-</div>
-    <div class='front-matter'>
-        <div class='wrap'>
-            <h1>Building the Self-Attention Mechanism of Large Language Models from scratch</h1>
-            <h4>In this project, I build the basic self-attention mechanism to calculate the attention scores of an input sentence.</h4>
-            <div class='bylines'>
-                <div class='byline'>
-                    <h3>Published</h3>
-                    <p>12 January 2025</p>
-                </div>
-            </div>
-            <div class='clear'></div>
-        </div>
-    </div>
-    <div class='wrap article'>
-        <p>In this project, we’re going to implement the Self-Attention mechanism used in the Transformer architecture.</p>
+I"-�<p>In this project, we’re going to implement the Self-Attention mechanism used in the Transformer architecture.</p>
 
 <p>This post will begin with a short recap of how the attention mechanism works, followed by a code-along section where we implement the attention mechanism for calculating the attention scores of input text sentences.</p>
 
@@ -357,9 +302,4 @@ MathJax.Hub.Config({
 <p>This project post was primarily an exercise in re-implementing and modifying Sebastian Raschka’s <a href="https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html" target="_blank">excellent blog post on the same topic</a></p>
 
 <p>I also found this code implementation by Mohd. Faraaz <a href="https://mohdfaraaz.medium.com/implementing-self-attention-from-scratch-in-pytorch-776ef7b8f13e" target="_blank">a good reference and sanity check.</a></p>
-
-    </div>
-    </div>
-</div>
-</body>
-</html>
+:ET

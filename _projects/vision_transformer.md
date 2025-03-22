@@ -602,7 +602,7 @@ And, perhaps most interesting of all, here's a visualization of how the model co
     <img class="post-image" src="/assets/images/vit_12.png" height=auto width="100%">
 </div>
 
-To see the full code implementation, 
+{% katexmm %} $$ ~ \\ $$ {% endkatexmm %}
 
 To see the full code implementation, <a href="https://github.com/codingowen/vision-transformer-from-scratch" target="_blank">please refer to my github repo here</a>!
 

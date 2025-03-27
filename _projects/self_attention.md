@@ -1,10 +1,9 @@
 ---
-title: Building the Self-Attention Mechanism of Large Language Models from scratch 
-subtitle: In this project, I build the basic self-attention mechanism to calculate the attention scores of an input sentence.
+title: Building the Self-Attention Mechanism from scratch 
+subtitle: In this project, I build the basic self-attention mechanism (used in large language models) to calculate the attention scores of an input sentence.
 shorttitle: Self-Attention From Scratch
 image: 
-    - assets/images/attention_22.png
-    - assets/images/attention_23.png
+    - assets/images/attention_24.png
 layout: default
 date: 2025-01-12
 custom_date: Spring 2025

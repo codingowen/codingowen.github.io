@@ -1,6 +1,16 @@
-I"�<p>In this project, we’re going to implement a Vision Transformer (ViT) for image classification, on the CIFAR-10 image dataset.</p>
+I"d6<p>In this project, we’re going to implement a Vision Transformer (ViT) for image classification, on the CIFAR-10 image dataset.</p>
 
 <p>Given that we’ve laid the theoretical foundation for the attention mechanism before, this will be more of a code-along post with some theory guiding us along the way.</p>
+
+<p>I trained the ViT on a 10-class image classification task for only 50 epochs, and got a 64% test accuracy, which is about 6 times better than random guessing, but still nowhere near a SoTA CNN. ViTs usually take hundreds to thousands of training epochs and a metric ton of data to shine, so this project is mostly for learning and simple, unoptimized demonstration.</p>
+
+<p>Really quickly though, here’s a cool visualization of how our ViT learns to compute attention over the images:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_12.png" height="auto" width="100%" />
+</div>
+
+<p>We’ll see how this is implemented in the following sections.</p>
 
 <p>Here’s the structure for this project post:</p>
 
@@ -167,14 +177,14 @@ R^{C \times P \times P} \rightarrow R^D
   <li>Perform a linear projection up to the number of output channels, defined by hidden_size</li>
 </ol>
 
-<p>Let’s say our input is (B, 3, 36, 36), where we have B number of 36x36 RGB (3-channel) images, with patch_size of 4 and hidden_size of 48.</p>
+<p>Let’s say our input is (B, 3, 32, 32), where we have B number of 32x32 RGB (3-channel) images, with patch_size of 4 and hidden_size of 48.</p>
 
-<p>So, passing (B, 3, 36, 36) into nn.Conv2d() outputs (B, 48, 9, 9) whereby we get 9x9 = 81 patches from splitting a 36x36 image into patch of patch_size 4.</p>
+<p>So, passing (B, 3, 32, 32) into nn.Conv2d() outputs (B, 48, 8, 8) whereby we get 8x8 = 64 patches from splitting a 32x32 image into patch of patch_size 4.</p>
 
-<p>Then, passing the output (B, 48, 9, 9) into x.flatten(2).transpose(1,2), what happens is:</p>
+<p>Then, passing the output (B, 48, 8, 8) into x.flatten(2).transpose(1,2), what happens is:</p>
 <ul>
-  <li>flatten(2) will collapse the last two dimensions (9x9) into one, so we now have (B, 48, 81)</li>
-  <li>transpose(1,2) helps us swap the axes of dimension 1 and 2, so we have (B, 81, 48). This is because transformers expect input of shape (batch_size, num_patches, embedding_dim)</li>
+  <li>flatten(2) will collapse the last two dimensions (8x8) into one, so we now have (B, 48, 64)</li>
+  <li>transpose(1,2) helps us swap the axes of dimension 1 and 2, so we have (B, 64, 48). This is because transformers expect input of shape (batch_size, num_patches, embedding_dim)</li>
 </ul>
 
 <p>Hence, each image has been transformed into a sequence of 81 embedding vectors.</p>
@@ -321,7 +331,7 @@ R^{C \times P \times P} \rightarrow R^D
         <span class="c1"># recall that Attention(K,Q,V) = SoftMax(QK^T/sqrt(head_size)) V
 </span>        <span class="n">attention_scores</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span> 
         <span class="n">attention_scores</span> <span class="o">=</span> <span class="n">attention_scores</span> <span class="o">/</span> <span class="n">math</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">attention_head_size</span><span class="p">)</span>
-        <span class="n">attention_probs</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">atention_scores</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">attention_probs</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">atention_scores</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">attention_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">attention_probs</span><span class="p">)</span>
         <span class="n">attention_output</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">attention_probs</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">return</span><span class="p">(</span><span class="n">attention_output</span><span class="p">,</span> <span class="n">attention_probs</span><span class="p">)</span>
@@ -494,7 +504,7 @@ R^{C \times P \times P} \rightarrow R^D
 <p>Here’s the code implementation for the full ViT classifier model:</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
-<span class="k">class</span> <span class="nc">ViTClassifer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ViTClassifier</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="s">"""
     The full ViT model for image classification
     """</span>
@@ -545,4 +555,47 @@ R^{C \times P \times P} \rightarrow R^D
 <ul>
   <li>Note that _init_weights() ensures all parameters start with reasonable values, to avoid unstable training. It checks the type of layer and applies the correct model parameter initialization for all layers of the model. It uses the self.apply() function by PyTorch.</li>
 </ul>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="4-results">4. Results</h3>
+
+<p>In this section, we’ll review the results from training a image classifying ViT model. The full implementation was done in a jupyter notebook, which can be found here.</p>
+
+<p>Firstly, here’s a quick preview of what 32x32 images the CIFAR-10 dataset contains:</p>
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_10.png" height="auto" width="100%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>I trained the model for 100 epochs, and it attained a final test accuracy of 64%.</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>Here are two plots showing how training loss, validation loss and validation accuracy changed over the epochs:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_11.png" height="auto" width="80%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>And, perhaps most interesting of all, here’s a visualization of how the model computes attention over the images. We can see that the model learned to generally focus on the key subject/class of each image, and ignore the background:</p>
+
+<div class="md-image-container">
+    <img class="post-image" src="/assets/images/vit_12.png" height="auto" width="100%" />
+</div>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<p>To see the full code implementation, <a href="https://github.com/codingowen/vision-transformer-from-scratch" target="_blank">please refer to my github repo here</a>!</p>
+
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext> </mtext><mspace linebreak="newline"></mspace></mrow><annotation encoding="application/x-tex"> ~ \\ </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace nobreak"> </span></span><span class="mspace newline"></span></span></span></span></p>
+
+<h3 id="5-references">5. References</h3>
+
+<p>This project post was primarily an exercise in re-implementing and slightly modifying Trung Tin Nguyen’s <a href="https://tintn.github.io/Implementing-Vision-Transformer-from-Scratch/" target="_blank">excellent blog post on the ViT</a>. I borrowed heavily from his teachings on the code implementation and theory, and I highly suggest a read through!</p>
+
+<p>I also found this walkthrough of the ViT by James Briggs <a href="https://www.pinecone.io/learn/series/image-search/vision-transformers/" target="_blank">an excellent reference and sanity check.</a> I also borrowed heavily from his intutive explanation of the theory, and if you already have a grasp of how Transformers work, I highly suggest this reference as your introduction to ViTs.</p>
 :ET

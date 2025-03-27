@@ -98,7 +98,7 @@
       },
       
       {
-        "id": "building-the-self-attention-mechanism-of-large-language-models-from-scratch",
+        "id": "building-the-self-attention-mechanism-from-scratch",
         "label": "Self-Attention From Scratch",
         "url": "/projects/self_attention/"
       },
@@ -279,10 +279,13 @@
         {"source": "building-long-short-term-memory-lstm-from-scratch",
          "target": "Machine Learning"},
         
-        {"source": "building-the-self-attention-mechanism-of-large-language-models-from-scratch",
+        {"source": "building-the-self-attention-mechanism-from-scratch",
          "target": "Machine Learning"},
         
         {"source": "visualizing-the-self-attention-mechanism",
+         "target": "Machine Learning"},
+        
+        {"source": "building-a-vision-transformer-vit-from-scratch",
          "target": "Machine Learning"}
     ]
   }

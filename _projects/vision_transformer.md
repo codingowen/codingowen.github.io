@@ -3,7 +3,7 @@ title: Building a Vision Transformer (ViT) from scratch
 subtitle: In this project, I build a Vision Transformer for image classification.
 shorttitle: Vision Transformer From Scratch
 image: 
-    - assets/images/vit_cover.png
+    - assets/images/vit_cover2.png
 layout: default
 date: 2025-03-08
 custom_date: Spring 2025

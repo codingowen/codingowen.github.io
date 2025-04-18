@@ -81,6 +81,10 @@
 <lastmod>2024-06-01T00:00:00+08:00</lastmod>
 </url>
 <url>
+<loc>http://localhost:4000/projects/hardware_portfolio/</loc>
+<lastmod>2024-09-20T00:00:00+08:00</lastmod>
+</url>
+<url>
 <loc>http://localhost:4000/projects/svd_ft_image_compression/</loc>
 <lastmod>2024-10-01T00:00:00+08:00</lastmod>
 </url>
@@ -123,6 +127,10 @@
 <url>
 <loc>http://localhost:4000/assets/images/stanford_wf_hackathon_poster.pdf</loc>
 <lastmod>2025-02-01T05:13:02+08:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/assets/pdf/Owen_hardware_portfolio.pdf</loc>
+<lastmod>2025-04-19T03:15:57+08:00</lastmod>
 </url>
 <url>
 <loc>http://localhost:4000/assets/plots/gaussian_copula.html</loc>

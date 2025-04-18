@@ -139,7 +139,13 @@ layout: null
          "target": "Machine Learning"},
         
         {"source": "building-a-vision-transformer-vit-from-scratch",
-         "target": "Machine Learning"}
+         "target": "Machine Learning"},
+
+        {"source": "my-hardware-engineering-portfolio",
+         "target": "ME/EE"},
+
+        {"source": "my-hardware-engineering-portfolio",
+         "target": "Robotics"}
     ]
   }
   

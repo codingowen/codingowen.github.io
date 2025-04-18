@@ -74,6 +74,12 @@
       },
       
       {
+        "id": "my-hardware-engineering-portfolio",
+        "label": "My Hardware Engineering Portfolio",
+        "url": "/projects/hardware_portfolio/"
+      },
+      
+      {
         "id": "image-compression-algorithms-using-singular-value-decomposition-fourier-transform",
         "label": "Dimensionality-Reduction Algorithms for Image Compression",
         "url": "/projects/svd_ft_image_compression/"
@@ -286,7 +292,13 @@
          "target": "Machine Learning"},
         
         {"source": "building-a-vision-transformer-vit-from-scratch",
-         "target": "Machine Learning"}
+         "target": "Machine Learning"},
+
+        {"source": "my-hardware-engineering-portfolio",
+         "target": "ME/EE"},
+
+        {"source": "my-hardware-engineering-portfolio",
+         "target": "Robotics"}
     ]
   }
   

@@ -124,6 +124,12 @@
 
       
       {
+        "id": "transformers-are-actually-kernel-smoothers",
+        "label": "Transformers are Kernel Smoothers",
+        "url": "/blog/2025/05/02/transformers_are_kernel_smoothers/"
+      },
+      
+      {
         "id": "visualizing-the-self-attention-mechanism",
         "label": "Visualizing Self-Attention",
         "url": "/blog/2025/02/27/self_attention_intuition/"
@@ -298,7 +304,10 @@
          "target": "ME/EE"},
 
         {"source": "my-hardware-engineering-portfolio",
-         "target": "Robotics"}
+         "target": "Robotics"},
+
+        {"source": "transformers-are-actually-kernel-smoothers",
+         "target": "Machine Learning"}
     ]
   }
   

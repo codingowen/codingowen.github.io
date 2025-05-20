@@ -145,7 +145,10 @@ layout: null
          "target": "ME/EE"},
 
         {"source": "my-hardware-engineering-portfolio",
-         "target": "Robotics"}
+         "target": "Robotics"},
+
+        {"source": "transformers-are-actually-kernel-smoothers",
+         "target": "Machine Learning"}
     ]
   }
   

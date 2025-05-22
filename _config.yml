@@ -1,12 +1,16 @@
+title: Owen's Personal Site
+description: Hi! I'm Owen, a graduate student in Machine Learning from the National University of Singapore. This website serves as a repository of my personal + school projects, and technical blog posts.
 highlighter: rouge
 permalink: /blog/:year/:month/:day/:title/
 environment: prod
-url: "http://codingowen.github.io"  # Sitemap base URL.
+url: "http://codingowen.github.io"  
 plugins:
   - jekyll-scholar
   - jekyll-sitemap
   - jekyll-feed
   - jekyll-katex
+  - jekyll-seo-tag
+  - jekyll-sitemap
 katex:
   js_path: "assets"  # Path used to search for katex.min.js
   rendering_options:
